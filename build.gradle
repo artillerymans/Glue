@@ -23,4 +23,16 @@ ext {
             MATERIAL             : 'com.google.android.material:material:1.5.0'
     ]
 
+    Compose = [
+            LIFECYCLE_VIEWMODEL_COMPOSE: "androidx.lifecycle:lifecycle-viewmodel-compose:2.6.1",
+            LIFECYCLE_RUNTIME_COMPOSE  : "androidx.lifecycle:lifecycle-runtime-compose:2.6.1",
+            NAVIGATION                 : "androidx.navigation:navigation-compose:2.5.3",
+
+    ]
+
+    Ble = [
+            /**蓝牙扫描*/
+            SCANNER: 'no.nordicsemi.android.support.v18:scanner:1.6.0'
+    ]
+
 }

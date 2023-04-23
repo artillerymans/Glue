@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace 'com.artillery.help'
+    namespace 'com.artillery.scanner'
     compileSdk rootProject.ext.COMPILE_SDK
 
     defaultConfig {
@@ -23,15 +23,15 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
-
     kotlinOptions {
         jvmTarget = '1.8'
     }
-
 }
 
 dependencies {
     implementation rootProject.ext.NativeAndroidX.CORE_KTX
     implementation rootProject.ext.NativeAndroidX.APPCOMPAT
     implementation rootProject.ext.NativeAndroidX.MATERIAL
+    /**蓝牙扫描*/
+    implementation rootProject.ext.Ble.SCANNER
 }

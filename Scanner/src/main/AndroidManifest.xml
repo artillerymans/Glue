@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:tools="http://schemas.android.com/tools"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!--必要权限-->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
+    <!--AndroidQ 更高需要-->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"
+        android:usesPermissionFlags="neverForLocation"
+        tools:targetApi="s" />
+
+    <!--Android R 或者更低需要-->
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+
+    <!--Android S 或者更高需要-->
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN"/>
+
+
+</manifest>
