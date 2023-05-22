@@ -11,8 +11,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import com.artillery.glue.ble.viewModels.BleScantViewModel
 
 /**
@@ -40,4 +42,11 @@ fun BleScantCompose(nav: NavController) {
         Text(text = "开始扫描")
     }
 
+}
+
+@Preview
+@Composable
+fun Def() {
+    val nav = rememberNavController()
+    BleScantCompose(nav = nav)
 }

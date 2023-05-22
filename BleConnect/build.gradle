@@ -1,0 +1,40 @@
+plugins {
+    id 'com.android.library'
+    id 'org.jetbrains.kotlin.android'
+}
+
+android {
+    namespace 'com.artillery.connect'
+    compileSdk rootProject.ext.COMPILE_SDK
+
+    defaultConfig {
+        minSdk rootProject.ext.MIN_SDK
+        targetSdk rootProject.ext.TARGET_SDK
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        consumerProguardFiles "consumer-rules.pro"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+}
+
+dependencies {
+    implementation rootProject.ext.NativeAndroidX.CORE_KTX
+    implementation rootProject.ext.NativeAndroidX.APPCOMPAT
+    implementation rootProject.ext.NativeAndroidX.MATERIAL
+    /*蓝牙连接*/
+    implementation rootProject.ext.Ble.BLE_CONNECT_KTX
+    implementation rootProject.ext.Ble.BLE_CONNECT_LIVEDATA
+}

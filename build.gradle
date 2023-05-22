@@ -32,7 +32,9 @@ ext {
 
     Ble = [
             /**蓝牙扫描*/
-            SCANNER: 'no.nordicsemi.android.support.v18:scanner:1.6.0'
+            SCANNER             : 'no.nordicsemi.android.support.v18:scanner:1.6.0',
+            BLE_CONNECT_KTX     : 'no.nordicsemi.android:ble-ktx:2.6.1',
+            BLE_CONNECT_LIVEDATA: 'no.nordicsemi.android:ble-livedata:2.6.1'
     ]
 
 }

@@ -16,3 +16,6 @@ rootProject.name = "Glue"
 include ':app'
 include ':Utils'
 include ':Scanner'
+include ':RwUtils'
+include ':ComposeUtils'
+include ':BleConnect'
