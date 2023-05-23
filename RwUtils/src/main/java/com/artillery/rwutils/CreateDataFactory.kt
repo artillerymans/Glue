@@ -1,11 +1,15 @@
 package com.artillery.rwutils
 
+import android.graphics.Bitmap
 import android.text.format.DateFormat
 import com.artillery.rwutils.cmd.BleConstantData
 import com.artillery.rwutils.exts.fillZeros
 import com.artillery.rwutils.exts.toByte
+import com.artillery.rwutils.exts.toByteArrays
+import com.artillery.rwutils.exts.toBytesLowerThree
 import com.artillery.rwutils.model.AlarmClock
 import com.artillery.rwutils.model.BWeather
+import com.artillery.rwutils.model.BloodTimeType
 import com.artillery.rwutils.model.ContactsItem
 import com.artillery.rwutils.model.DistanceUnit
 import com.artillery.rwutils.model.NoticeType
@@ -18,6 +22,7 @@ import com.artillery.rwutils.type.SwitchType
 import com.artillery.rwutils.type.SystemType
 import com.artillery.rwutils.type.ZhType
 import com.artillery.rwutils.type.getLanguageType
+import com.blankj.utilcode.util.FileIOUtils
 import com.blankj.utilcode.util.LanguageUtils
 import com.blankj.utilcode.util.Utils
 import java.nio.ByteBuffer
@@ -207,6 +212,25 @@ object CreateDataFactory {
         }
     }
 
+    /**
+     * 设置血糖相关
+     */
+    fun createSettingBlood(
+        bloodCorrect: Byte,  //血糖校准值 40 代表 4.0
+        bloodTimeType: BloodTimeType
+    ): ByteBuffer {
+        return ByteBuffer.allocate(8).apply {
+            put(BleConstantData.CMD_SET_USER_INFO.toByte())
+            put(0x09)
+            putInt((System.currentTimeMillis() / 1000).toInt())
+            put(bloodCorrect)
+            put(bloodTimeType.value.toByte())
+        }
+    }
+
+
+
+
 
     /**
      * 查找手环
@@ -285,6 +309,12 @@ object CreateDataFactory {
     fun createHeartRateByTime(
         data: ProcessDataRequest.HeartRates,
     ): ByteBuffer {
+        return createDataByTime(data)
+    }
+
+    fun createBloodByTime(
+        data: ProcessDataRequest.Blood
+    ): ByteBuffer{
         return createDataByTime(data)
     }
 
@@ -526,6 +556,191 @@ object CreateDataFactory {
             put(cmd)
         }
     }
+
+
+    /**
+     * 开始传输图片前开始发送准备动作
+     */
+    fun createFastTransferBitmapPrepare(
+        cmd: Byte = 0x38,
+    ): ByteBuffer {
+        return ByteBuffer.allocate(5).apply {
+            put(cmd)
+            putShort((0xfffe).toShort())
+            flip()
+        }
+    }
+
+
+    /**
+     * 创建高速传递图片
+     */
+    fun createFastTransferBitMap(
+        bitmap: Bitmap,
+        cmd: Byte = 0x38
+    ): List<ByteBuffer>{
+        return mutableListOf<ByteBuffer>().apply {
+            val tempBytes = bitmap.toByteArrays()
+            bitmap.recycle()
+            var byteBuffer: ByteBuffer
+            var offset = 0
+            while (offset < tempBytes.size) {
+                val remaining = tempBytes.size - offset
+                val length = if (remaining > 224) 224 else remaining
+                byteBuffer = ByteBuffer.allocate(length + 3)
+                byteBuffer.put(cmd)  //命令码
+                byteBuffer.putShort(size.toShort()) //序列号从0开始
+                byteBuffer.put(tempBytes, offset, length)
+                byteBuffer.flip()
+                add(byteBuffer)
+                offset += length
+            }
+            //添加结束包
+            byteBuffer = ByteBuffer.allocate(4).apply {
+                put(cmd)
+                putShort((0xffff).toShort())
+                put(0)  //校验和
+                flip()
+            }
+            add(byteBuffer)
+        }
+    }
+
+
+    /**
+     * 高速传输bin 准备
+     */
+    fun createFastTransferBinPrepare(
+        cmd: Byte = 0x39
+    ): ByteBuffer {
+        return ByteBuffer.allocate(6).apply {
+            put(cmd)
+            put(byteArrayOf(0xff.toByte(), 0xff.toByte(), 0xfe.toByte()))
+            putShort(0) //数据帧的有效数据大小
+        }
+    }
+
+    /**
+     * 传输bin文件
+     */
+    fun createFastTransferBin(
+        path: String,
+        cmd: Byte = 0x39
+    ): List<ByteBuffer> {
+        return mutableListOf<ByteBuffer>().apply {
+            val bytes = FileIOUtils.readFile2BytesByStream(path)
+            var byteBuffer: ByteBuffer
+            var offset = 0
+            while (offset < bytes.size) {
+                val remaining = bytes.size - offset
+                val length = if (remaining > 224) 224 else remaining
+                byteBuffer = ByteBuffer.allocate(length + 4)
+                byteBuffer.put(cmd)  //命令码
+                byteBuffer.put(size.toBytesLowerThree()) //序列号从0开始
+                byteBuffer.put(bytes, offset, length)
+                byteBuffer.flip()
+                add(byteBuffer)
+                offset += length
+            }
+            //添加结束包
+            byteBuffer = ByteBuffer.allocate(8).apply {
+                put(cmd)
+                put(byteArrayOf(0xff.toByte(), 0xff.toByte(), 0xff.toByte()))
+                putInt(bytes.size)  //校验和
+                flip()
+            }
+            add(byteBuffer)
+        }
+    }
+
+
+    /**
+     * 名片 发送预备
+     */
+    fun createCardPrepare(cmd: Byte = 0x3b): ByteBuffer {
+        return ByteBuffer.allocate(3).apply {
+            put(cmd)
+            putShort((0xfffe).toShort())
+        }
+    }
+
+    fun crateCard(
+        bitmap: Bitmap,
+        cmd: Byte = 0x3b
+    ): List<ByteBuffer>{
+        return mutableListOf<ByteBuffer>().apply {
+            val content = bitmap.toByteArrays()
+            bitmap.recycle()
+
+            var packet: ByteBuffer
+            var offset = 0
+            while (offset < content.size) {
+                val remaining = content.size - offset
+                val length = if (remaining > 16) 16 else remaining
+                packet = ByteBuffer.allocate(length + 4)
+                packet.put(cmd)  //命令码
+                packet.put(size.toBytesLowerThree()) //序列号从0开始
+                packet.put(content, offset, length)
+                packet.flip()
+                add(packet)
+                offset += length
+            }
+            //结束
+            packet = ByteBuffer.allocate(4).apply {
+                put(cmd)
+                put((0xffffff).toBytesLowerThree())
+            }
+            add(packet)
+        }
+    }
+
+
+    /**
+     * 传输运动轨迹 预备
+     */
+    fun createFastTransferTrackPrepare(
+        cmd: Byte = 0x3c
+    ): ByteBuffer {
+        return ByteBuffer.allocate(9).apply {
+            put(cmd)
+            putShort(0xffe)
+            putShort(0)  //数据帧有效数据大小
+            putInt((System.currentTimeMillis() / 1000).toInt())
+        }
+    }
+
+    fun createFastTransferTrack(
+        bitmap: Bitmap,
+        cmd: Byte = 0x3c
+    ): List<ByteBuffer> {
+        return mutableListOf<ByteBuffer>().apply {
+            val content = bitmap.toByteArrays()
+            bitmap.recycle()
+            var packet: ByteBuffer
+            var offset = 0
+            while (offset < content.size) {
+                val remaining = content.size - offset
+                val length = if (remaining > 224) 224 else remaining
+                packet = ByteBuffer.allocate(length + 3)
+                packet.put(cmd)  //命令码
+                packet.putShort(size.toShort()) //序列号从0开始
+                packet.put(content, offset, length)
+                packet.flip()
+                add(packet)
+                offset += length
+            }
+            //结束
+            packet = ByteBuffer.allocate(4).apply {
+                put(cmd)
+                put((0xffff).toBytesLowerThree())
+            }
+            add(packet)
+        }
+    }
+
+
+
+
 
 
 

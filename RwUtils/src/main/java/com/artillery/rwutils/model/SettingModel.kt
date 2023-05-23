@@ -48,6 +48,13 @@ sealed class ProcessDataRequest(val cmd: Byte, val year: Int, val month: Int, va
         cmd: Byte = BleConstantData.CMD_GET_HEART_RATES,
     ) : ProcessDataRequest(cmd, year, month, day)
 
+    class Blood(
+        year: Int,
+        month: Int,
+        day: Int,
+        cmd: Byte = BleConstantData.CMD_GET_BLOOD,
+    ): ProcessDataRequest(cmd, year, month, day)
+
     fun toYearByte(): Byte {
         return if (year >= 2000) {
             (year - 2000).toByte()
@@ -55,6 +62,17 @@ sealed class ProcessDataRequest(val cmd: Byte, val year: Int, val month: Int, va
             year.toByte()
         }
     }
+}
+
+sealed class BloodTimeType(val value: Int){
+    class Random(value: Int = 0): BloodTimeType(value)
+    class Emptiness(value: Int = 1): BloodTimeType(value)
+    class AfterBreakfast(value: Int = 2): BloodTimeType(value)
+    class BeforeLunch(value: Int = 3): BloodTimeType(value)
+    class AfterLunch(value: Int = 4): BloodTimeType(value)
+    class BeforeDinner(value: Int = 5): BloodTimeType(value)
+    class AfterDinner(value: Int = 6): BloodTimeType(value)
+    class BeforeBed(value: Int = 7): BloodTimeType(value)
 }
 
 

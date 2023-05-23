@@ -59,6 +59,11 @@ object BleConstantData {
      */
     const val CMD_GET_HEART_RATES: Byte = 0x16
 
+    /**
+     * 血糖
+     */
+    const val CMD_GET_BLOOD: Byte = 0x18
+
 
     /**
      * 停止心率实时测试和测试时间

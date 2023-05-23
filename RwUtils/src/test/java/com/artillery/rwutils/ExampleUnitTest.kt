@@ -1,5 +1,8 @@
 package com.artillery.rwutils
 
+import com.artillery.rwutils.exts.toBytes
+import com.artillery.rwutils.exts.toBytesLowerThree
+import com.blankj.utilcode.util.ConvertUtils
 import org.junit.Test
 
 import java.nio.ByteBuffer
@@ -14,17 +17,47 @@ class ExampleUnitTest {
 
     @Test
     fun verification(){
-        val value = 30
-        val buffer = ByteBuffer.allocate(20)
-        buffer.putInt(value)
-        fillZeros(buffer)
-        buffer.flip()
 
-        while (buffer.hasRemaining()){
-            val byte = buffer.get()
-            println(byte)
+        val intValue3764 = 0x01348902
+        println(ConvertUtils.bytes2HexString(intValue3764.toBytesLowerThree()))
 
-        }
+
+        /* val buffer = ByteBuffer.allocate(4) // 分配 4 个字节的 ByteBuffer
+
+         val value = 0x12345678 // 写入的整数值
+
+         buffer.putInt(value) // 写入整数值
+
+         val bytes = ByteArray(3) // 分配 3 个字节的数组
+
+         buffer.position(1) // 将 position 设置为 1，跳过第一个字节
+         buffer.get(bytes) // 获取后面三个字节
+         val hexString: String =  ConvertUtils.bytes2HexString(bytes) // 将字节数组转换为 hex string
+
+         println(hexString) // 输出 hex string*/
+
+
+        /*
+                val int = 0xffffff
+                println()
+
+                val short = (0xfffe).toShort()
+                println(short)
+                println(short.toUShort())
+
+
+                val value = 30
+                val buffer = ByteBuffer.allocate(20)
+                buffer.putInt(value)
+                fillZeros(buffer)
+                buffer.flip()
+
+                while (buffer.hasRemaining()){
+                    val byte = buffer.get()
+                    println(byte)
+                }*/
+
+
 
     }
 
