@@ -6,6 +6,14 @@ import com.blankj.utilcode.util.ConvertUtils
 import com.artillery.rwutils.crc.crc
 import com.artillery.rwutils.exts.toBuffer
 import com.artillery.rwutils.exts.zeroByte
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
 import org.junit.Test
 
 import java.nio.ByteBuffer
@@ -16,6 +24,33 @@ import java.nio.ByteBuffer
  * See [testing documentation](http://d.android.com/tools/testing).
  */
 class ExampleUnitTest {
+
+
+    @OptIn(DelicateCoroutinesApi::class)
+    @Test
+    fun testCoordination(){
+        val job = CoroutineScope(Dispatchers.Default).launch {
+            println("------->")
+            a23()
+            println("ppppp------->")
+        }
+        Thread.sleep(100000)
+    }
+
+    suspend fun a23(){
+        val list = (0..100).toList()
+        list.forEach {index ->
+            val text = suspendCancellableCoroutine<String> {
+                println("index = $index")
+                it.resumeWith(Result.success("$index"))
+
+            }
+
+            println("0000000000000 -> 返回的数据 = $text")
+
+        }
+
+    }
 
 
     @Test
