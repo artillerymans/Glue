@@ -1,6 +1,7 @@
 package com.artillery.glue
 
 import android.os.Bundle
+import android.os.ParcelUuid
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,6 +17,8 @@ import androidx.navigation.compose.rememberNavController
 import com.artillery.glue.ble.BleScantCompose
 import com.artillery.glue.ui.NavConstant
 import com.artillery.glue.ui.theme.GlueTheme
+import no.nordicsemi.android.common.ui.scanner.ScannerScreen
+import no.nordicsemi.android.common.ui.scanner.main.DeviceListItem
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -29,7 +32,13 @@ class MainActivity : ComponentActivity() {
                 ) {
                     NavHost(navController = navController, startDestination = NavConstant.Ble.Scant){
                         composable(NavConstant.Ble.Scant){
-                            BleScantCompose(navController)
+                            ScannerScreen(
+                                "扫描",
+                                null,
+                                onResult = {
+
+                                }
+                            )
                         }
                     }
                 }

@@ -3,6 +3,7 @@ package com.artillery.rwutils
 import com.artillery.rwutils.exts.toBytes
 import com.artillery.rwutils.exts.toBytesLowerThree
 import com.blankj.utilcode.util.ConvertUtils
+import com.artillery.rwutils.crc.crc
 import org.junit.Test
 
 import java.nio.ByteBuffer
@@ -14,6 +15,16 @@ import java.nio.ByteBuffer
  */
 class ExampleUnitTest {
 
+
+    @Test
+    fun crcTest(){
+        val text: String = "Example local unit test, which will execute on the development machine (host)."
+        val crc = text.toByteArray().crc()
+        println(crc.toUInt())
+        println(crc)
+        //2320888715
+
+    }
 
     @Test
     fun verification(){

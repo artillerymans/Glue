@@ -37,4 +37,6 @@ dependencies {
     /*蓝牙连接*/
     implementation rootProject.ext.Ble.BLE_CONNECT_KTX
     implementation rootProject.ext.Ble.BLE_CONNECT_LIVEDATA
+
+    implementation 'com.blankj:utilcodex:1.31.1'
 }
