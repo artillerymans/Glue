@@ -1,13 +1,15 @@
 package com.artillery.rwutils.model
 
+import androidx.annotation.Keep
 import com.artillery.rwutils.cmd.BleConstantData
 import com.artillery.rwutils.type.SwitchType
-import kotlin.math.min
 
 
 /**
+ *
  * 闹钟提醒
  */
+@Keep
 data class AlarmClock(
     var enable: SwitchType,
     var startTime: Short,  //高位在前
@@ -20,6 +22,7 @@ data class AlarmClock(
  * 勿扰模式
  * 喝水提醒
  */
+@Keep
 data class RemindItem(
     var enable: SwitchType,
     var interval: Byte,  //提醒间隔
@@ -35,24 +38,24 @@ data class RemindItem(
  */
 sealed class ProcessDataRequest(val cmd: Byte, val year: Int, val month: Int, val day: Int) {
 
-    class Steps(year: Int, month: Int, day: Int, cmd: Byte = BleConstantData.CMD_GET_STEPS) :
+    class Steps(year: Int, month: Int, day: Int, cmd: Byte = BleConstantData.CMD_0x13) :
         ProcessDataRequest(cmd, year, month, day)
 
-    class Sleeps(year: Int, month: Int, day: Int, cmd: Byte = BleConstantData.CMD_GET_SLEEPS) :
+    class Sleeps(year: Int, month: Int, day: Int, cmd: Byte = BleConstantData.CMD_0x15) :
         ProcessDataRequest(cmd, year, month, day)
 
     class HeartRates(
         year: Int,
         month: Int,
         day: Int,
-        cmd: Byte = BleConstantData.CMD_GET_HEART_RATES,
+        cmd: Byte = BleConstantData.CMD_0x16,
     ) : ProcessDataRequest(cmd, year, month, day)
 
     class Blood(
         year: Int,
         month: Int,
         day: Int,
-        cmd: Byte = BleConstantData.CMD_GET_BLOOD,
+        cmd: Byte = BleConstantData.CMD_0x18,
     ): ProcessDataRequest(cmd, year, month, day)
 
     fun toYearByte(): Byte {
@@ -179,3 +182,14 @@ data class ContactsItem(
     var name: String,
     var mobile: String
 )
+
+
+data class BleResult<T>(
+    val cmd:Int = -1,
+    var code: Int = -1,
+    var data: T? = null
+){
+    fun isSuccess():Boolean {
+        return code == BleConstantData.SUCCESS_BLE_CODE
+    }
+}

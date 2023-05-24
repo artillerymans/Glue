@@ -1,3 +1,4 @@
+/*
 package com.artillery.connect
 
 
@@ -112,9 +113,11 @@ class GattService : Service() {
             else -> false
         }
 
-    /**
+    */
+/**
      * A binding to be used to interact with data of the service
-     */
+     *//*
+
     inner class DataPlane : Binder() {
         fun setMyCharacteristicChangedChannel(sendChannel: SendChannel<String>) {
             myCharacteristicChangedChannel = sendChannel
@@ -150,13 +153,17 @@ class GattService : Service() {
         clientManagers.remove(device.address)?.close()
     }
 
-    /*
+    */
+/*
      * Manages the entire GATT service, declaring the services and characteristics on offer
-     */
+     *//*
+
     companion object {
-        /**
+        */
+/**
          * A binding action to return a binding that can be used in relation to the service's data
-         */
+         *//*
+
         const val DATA_PLANE_ACTION = "data-plane"
 
         private const val TAG = "gatt-service"
@@ -221,4 +228,4 @@ class GattService : Service() {
         val MY_SERVICE_UUID: UUID = UUID.fromString("80323644-3537-4F0B-A53B-CF494ECEAAB3")
         val MY_CHARACTERISTIC_UUID: UUID = UUID.fromString("80323644-3537-4F0B-A53B-CF494ECEAAB3")
     }
-}
+}*/

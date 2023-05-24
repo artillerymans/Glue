@@ -4,6 +4,8 @@ import com.artillery.rwutils.exts.toBytes
 import com.artillery.rwutils.exts.toBytesLowerThree
 import com.blankj.utilcode.util.ConvertUtils
 import com.artillery.rwutils.crc.crc
+import com.artillery.rwutils.exts.toBuffer
+import com.artillery.rwutils.exts.zeroByte
 import org.junit.Test
 
 import java.nio.ByteBuffer
@@ -15,6 +17,59 @@ import java.nio.ByteBuffer
  */
 class ExampleUnitTest {
 
+
+    @Test
+    fun bytesSum(){
+        val a1 = 0x01
+        val a2 = 0x02
+        val a3 = 0x04
+        val a4 = 0x07
+        println(a1.toString(2))
+        println(a2.toString(2))
+        println(a3.toString(2))
+        println(a4.toString(2))
+        println((a1 and a2).toString(2))
+
+        val result = 0x01
+        println(result.toString(2))
+        println("是否支持： A1 = ${(result and a1) > zeroByte()}")
+        println("是否支持： A2 = ${(result and a2) > zeroByte()}")
+        println("是否支持： A3 = ${(result and a3) > zeroByte()}")
+
+    }
+
+    @Test
+    fun wrapBytes(){
+        val textBytes = "HD01_A1".toByteArray()
+        val tempBytes = textBytes.toMutableList().apply {
+            add(0)
+        }.toByteArray()
+        println(ConvertUtils.bytes2HexString(tempBytes))
+
+        val buffer = tempBytes.toBuffer()
+
+        val versionBytes = ByteArray(8).apply {
+            buffer.get(this)
+        }.map { byte -> if (byte == 0.toByte()) '0' else byte.toInt().toChar() }.joinToString("")
+        println(versionBytes)
+    }
+
+
+    @Test
+    fun createByteArrays(){
+        val bytes = ByteArray(8).apply {
+            ByteBuffer.wrap(this).apply {
+                put(0x08)
+                put(0x09)
+                put(0x23)
+                put(0x10)
+                putInt(120)
+            }
+        }
+
+        println(ConvertUtils.bytes2HexString(bytes))
+
+    }
 
     @Test
     fun crcTest(){

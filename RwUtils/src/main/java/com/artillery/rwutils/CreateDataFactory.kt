@@ -26,7 +26,6 @@ import com.blankj.utilcode.util.FileIOUtils
 import com.blankj.utilcode.util.LanguageUtils
 import com.blankj.utilcode.util.Utils
 import java.nio.ByteBuffer
-import java.nio.ByteOrder
 import java.util.Calendar
 import java.util.Locale
 import java.util.TimeZone
@@ -35,13 +34,13 @@ import kotlin.experimental.or
 /**
  * @author : zhiweizhu
  * create on: 2023/5/22 下午3:55
+ * 当前创建的都是发送的数据
  */
 object CreateDataFactory {
-
     /**
      * 设置日期时间
      */
-    fun createDateTime(): ByteBuffer {
+    fun createDateTime(): ByteArray {
         val calendar = Calendar.getInstance()
         //UTC时间戳
         val timeInSecond = calendar.timeInMillis / 1000
@@ -70,35 +69,39 @@ object CreateDataFactory {
         otherLanguage: Byte,
         isChinese: Byte,
         os: Byte,
-        cmd: Byte = BleConstantData.CMD_SET_DATE_TIME.toByte(),
-    ): ByteBuffer {
-        return ByteBuffer.allocate(20).apply {
-            order(ByteOrder.BIG_ENDIAN)
-            //命令
-            put(cmd)
-            //UTC时间戳到秒
-            putInt(timeInSecond)
-            //时区
-            putInt(timeZone * 60 * 60)
-            //时间格式
-            put(hour12)
-            //其他语言
-            put(otherLanguage)
-            //是否是中文
-            put(isChinese)
-            //操作系统
-            put(os)
+        cmd: Byte = BleConstantData.CMD_0x01.toByte(),
+    ): ByteArray {
+        return ByteArray(20).apply {
+            ByteBuffer.wrap(this).apply {
+                //命令
+                put(cmd)
+                //UTC时间戳到秒
+                putInt(timeInSecond)
+                //时区
+                putInt(timeZone * 60 * 60)
+                //时间格式
+                put(hour12)
+                //其他语言
+                put(otherLanguage)
+                //是否是中文
+                put(isChinese)
+                //操作系统
+                put(os)
+            }
         }
+
     }
 
 
     /**
      * 获取手环功能列表
      */
-    fun createWatchFunctionList(): ByteBuffer {
-        return ByteBuffer.allocate(2).apply {
-            put(BleConstantData.HEAD_0X03)
-            put(BleConstantData.RESERVED_DEF_0X00)
+    fun createWatchFunctionList(): ByteArray {
+        return ByteArray(2).apply {
+            ByteBuffer.wrap(this).apply {
+                put(BleConstantData.HEAD_0X03)
+                put(BleConstantData.RESERVED_DEF_0X00)
+            }
         }
     }
 
@@ -112,16 +115,18 @@ object CreateDataFactory {
         stepLength: Byte,
         gender: Gender,  //0x00:女 0x01:男
         targetStep: Int,
-    ): ByteBuffer {
-        return ByteBuffer.allocate(20).apply {
-            put(BleConstantData.CMD_SET_USER_INFO.toByte())
-            put(0x01)
-            putShort(weight)
-            put(age)
-            put(height)
-            put(stepLength)
-            put(if (gender == Gender.Woman) 0x00 else 0x01)
-            putInt(targetStep)
+    ): ByteArray {
+        return ByteArray(20).apply {
+            ByteBuffer.wrap(this).apply {
+                put(BleConstantData.CMD_0x02)
+                put(0x01)
+                putShort(weight)
+                put(age)
+                put(height)
+                put(stepLength)
+                put(if (gender == Gender.Woman) 0x00 else 0x01)
+                putInt(targetStep)
+            }
         }
     }
 
@@ -148,28 +153,30 @@ object CreateDataFactory {
         liftScreenLightEnable: SwitchType = SwitchType.OFF,
         heartRateWhileEnable: SwitchType = SwitchType.OFF,
         heartRateInterval: Byte = 5,
-    ): ByteBuffer {
-        return ByteBuffer.allocate(20).apply {
-            put(BleConstantData.CMD_SET_USER_INFO.toByte())
-            put(0x02)
-            put(skypeEnable.toByte())
-            put(lineEnable.toByte())
-            put(incomingCallEnable.toByte())
-            put(smsNoticeEnable.toByte())
-            put(wxNoticeEnable.toByte())
-            put(qqNoticeEnable.toByte())
-            put(kakaoTalkEnable.toByte())
-            put(facebookEnable.toByte())
-            put(twitterEnable.toByte())
-            put(whatsappEnable.toByte())
-            put(linkedinEnable.toByte())
-            put(viberEnable.toByte())
-            put(instagramEnable.toByte())
-            put(messengerEnable.toByte())
-            put(otherAppEnable.toByte())
-            put(liftScreenLightEnable.toByte())
-            put(heartRateWhileEnable.toByte())
-            put(heartRateInterval)
+    ): ByteArray {
+        return ByteArray(20).apply {
+            ByteBuffer.wrap(this).apply {
+                put(BleConstantData.CMD_0x02)
+                put(0x02)
+                put(skypeEnable.toByte())
+                put(lineEnable.toByte())
+                put(incomingCallEnable.toByte())
+                put(smsNoticeEnable.toByte())
+                put(wxNoticeEnable.toByte())
+                put(qqNoticeEnable.toByte())
+                put(kakaoTalkEnable.toByte())
+                put(facebookEnable.toByte())
+                put(twitterEnable.toByte())
+                put(whatsappEnable.toByte())
+                put(linkedinEnable.toByte())
+                put(viberEnable.toByte())
+                put(instagramEnable.toByte())
+                put(messengerEnable.toByte())
+                put(otherAppEnable.toByte())
+                put(liftScreenLightEnable.toByte())
+                put(heartRateWhileEnable.toByte())
+                put(heartRateInterval)
+            }
         }
     }
 
@@ -179,14 +186,16 @@ object CreateDataFactory {
      */
     fun createSettingsAlarmClock(
         list: MutableList<AlarmClock>,
-    ): ByteBuffer {
-        return ByteBuffer.allocate(20).apply {
-            put(BleConstantData.CMD_SET_USER_INFO.toByte())
-            put(0x03)
-            list.forEach { item ->
-                put(item.enable.toByte())
-                putShort(item.startTime)
-                put(item.choiceDays.fold(0.toByte()) { acc, day -> acc or day })
+    ): ByteArray {
+        return ByteArray(20).apply {
+            ByteBuffer.wrap(this).apply {
+                put(BleConstantData.CMD_0x02)
+                put(0x03)
+                list.forEach { item ->
+                    put(item.enable.toByte())
+                    putShort(item.startTime)
+                    put(item.choiceDays.fold(0.toByte()) { acc, day -> acc or day })
+                }
             }
         }
     }
@@ -197,17 +206,19 @@ object CreateDataFactory {
      */
     fun createSettingRemind(
         list: List<RemindItem>,
-    ): ByteBuffer {
-        return ByteBuffer.allocate(20).apply {
-            put(BleConstantData.CMD_SET_USER_INFO.toByte())
-            put(0x04)
-            list.forEach { item ->
-                put(item.enable.toByte())
-                put(item.interval)
-                put(item.startHour)
-                put(item.startMinute)
-                put(item.endHour)
-                put(item.endMinute)
+    ): ByteArray {
+        return ByteArray(20).apply {
+            ByteBuffer.wrap(this).apply {
+                put(BleConstantData.CMD_0x02)
+                put(0x04)
+                list.forEach { item ->
+                    put(item.enable.toByte())
+                    put(item.interval)
+                    put(item.startHour)
+                    put(item.startMinute)
+                    put(item.endHour)
+                    put(item.endMinute)
+                }
             }
         }
     }
@@ -218,18 +229,17 @@ object CreateDataFactory {
     fun createSettingBlood(
         bloodCorrect: Byte,  //血糖校准值 40 代表 4.0
         bloodTimeType: BloodTimeType
-    ): ByteBuffer {
-        return ByteBuffer.allocate(8).apply {
-            put(BleConstantData.CMD_SET_USER_INFO.toByte())
-            put(0x09)
-            putInt((System.currentTimeMillis() / 1000).toInt())
-            put(bloodCorrect)
-            put(bloodTimeType.value.toByte())
+    ): ByteArray {
+       return ByteArray(8).apply {
+            ByteBuffer.wrap(this).apply {
+                put(BleConstantData.CMD_0x02)
+                put(0x09)
+                putInt((System.currentTimeMillis() / 1000).toInt())
+                put(bloodCorrect)
+                put(bloodTimeType.value.toByte())
+            }
         }
     }
-
-
-
 
 
     /**
@@ -237,10 +247,12 @@ object CreateDataFactory {
      */
     fun createFindWatchDevice(
         enable: SwitchType,
-    ): ByteBuffer {
-        return ByteBuffer.allocate(2).apply {
-            put(BleConstantData.CMD_FIND_WATCH_DEVICE)
-            put(enable.toByte())
+    ): ByteArray {
+        return ByteArray(2).apply {
+            ByteBuffer.wrap(this).apply {
+                put(BleConstantData.CMD_0x51)
+                put(enable.toByte())
+            }
         }
     }
 
@@ -248,20 +260,24 @@ object CreateDataFactory {
     /**
      * 蓝牙拍照 手机通知蓝牙进入、退出拍照
      */
-    fun createTakePhoto(enable: SwitchType): ByteBuffer {
-        return ByteBuffer.allocate(2).apply {
-            put(BleConstantData.CMD_TAKE_PHOTO)
-            put(enable.toByte())
+    fun createTakePhoto(enable: SwitchType): ByteArray {
+        return ByteArray(2).apply {
+            ByteBuffer.wrap(this).apply {
+                put(BleConstantData.CMD_0x52)
+                put(enable.toByte())
+            }
         }
     }
 
     /**
      * 蓝牙开始拍照
      */
-    fun createStartTakePhoto(): ByteBuffer {
-        return ByteBuffer.allocate(2).apply {
-            put(BleConstantData.CMD_START_TAKE_PHOTO.toByte())
-            put(0x01)
+    fun createStartTakePhoto(): ByteArray {
+        return ByteArray(2).apply {
+            ByteBuffer.wrap(this).apply {
+                put(BleConstantData.CMD_0xA2.toByte())
+                put(0x01)
+            }
         }
     }
 
@@ -269,18 +285,22 @@ object CreateDataFactory {
     /**
      * 获取电池电量
      */
-    fun createBatteryLevel(): ByteBuffer {
-        return ByteBuffer.allocate(1).apply {
-            put(BleConstantData.CMD_BATTER_LEVEL)
+    fun createBatteryLevel(): ByteArray {
+        return ByteArray(1).apply {
+            ByteBuffer.wrap(this).apply {
+                put(BleConstantData.CMD_0x14)
+            }
         }
     }
 
     /**
      * 获取软件版本
      */
-    fun createSoftVersion(): ByteBuffer {
-        return ByteBuffer.allocate(1).apply {
-            put(BleConstantData.CMD_SOFT_VERSION)
+    fun createSoftVersion(): ByteArray {
+        return ByteArray(1).apply {
+            ByteBuffer.wrap(this).apply {
+                put(BleConstantData.CMD_0x1f)
+            }
         }
     }
 
@@ -290,7 +310,7 @@ object CreateDataFactory {
      */
     fun createStepsByTime(
         data: ProcessDataRequest.Steps,
-    ): ByteBuffer {
+    ): ByteArray {
         return createDataByTime(data)
     }
 
@@ -299,7 +319,7 @@ object CreateDataFactory {
      */
     fun createSleepsByTime(
         data: ProcessDataRequest.Sleeps,
-    ): ByteBuffer {
+    ): ByteArray {
         return createDataByTime(data)
     }
 
@@ -308,13 +328,16 @@ object CreateDataFactory {
      */
     fun createHeartRateByTime(
         data: ProcessDataRequest.HeartRates,
-    ): ByteBuffer {
+    ): ByteArray {
         return createDataByTime(data)
     }
 
+    /**
+     * 血糖
+     */
     fun createBloodByTime(
         data: ProcessDataRequest.Blood
-    ): ByteBuffer{
+    ): ByteArray {
         return createDataByTime(data)
     }
 
@@ -323,12 +346,14 @@ object CreateDataFactory {
      */
     private fun createDataByTime(
         data: ProcessDataRequest,
-    ): ByteBuffer {
-        return ByteBuffer.allocate(4).apply {
-            put(data.cmd)
-            put(data.toYearByte())
-            put(data.month.toByte())
-            put(data.day.toByte())
+    ): ByteArray {
+        return ByteArray(4).apply {
+            ByteBuffer.wrap(this).apply {
+                put(data.cmd)
+                put(data.toYearByte())
+                put(data.month.toByte())
+                put(data.day.toByte())
+            }
         }
     }
 
@@ -343,11 +368,13 @@ object CreateDataFactory {
     fun createSwitchListen(
         enable: SwitchType,
         byte: Byte,
-    ): ByteBuffer {
-        return ByteBuffer.allocate(3).apply {
-            put(BleConstantData.CMD_SWITCH_HEART_LISTEN)
-            put(byte)
-            put(enable.toByte())
+    ): ByteArray {
+        return ByteArray(3).apply {
+            ByteBuffer.wrap(this).apply {
+                put(BleConstantData.CMD_0x60)
+                put(byte)
+                put(enable.toByte())
+            }
         }
     }
 
@@ -355,50 +382,52 @@ object CreateDataFactory {
     /**
      * 恢复出厂设置
      */
-    fun createResetFactorySetting(): ByteBuffer {
-        return ByteBuffer.allocate(4).apply {
-            put(0x71)
-            put(0x01)
-            put(0x02)
-            put(0x03)
+    fun createResetFactorySetting(): ByteArray {
+        return ByteArray(4).apply {
+            ByteBuffer.wrap(this).apply {
+                put(0x71)
+                put(0x01)
+                put(0x02)
+                put(0x03)
+            }
         }
     }
 
     /**
      * 创建推送消息
      */
-    fun createMessagePush(text: String, type: NoticeType, cmd: Byte = 0x73): List<ByteBuffer> {
-        return mutableListOf<ByteBuffer>().apply {
-            val content = text.toByteArray()
-            var packet: ByteBuffer
-            var offset = 0
-            while (offset < content.size) {
-                val remaining = content.size - offset
-                val length = if (remaining > 17) 17 else remaining
-                packet = ByteBuffer.allocate(length + 3)
-                packet.put(cmd)  //命令码
-                packet.put((size + 1).toByte()) //序列号从1开始
-                packet.put(type.value.toByte())  //通知的类型
-                packet.put(content, offset, length)
-                packet.flip()
-                add(packet)
-                offset += length
-            }
+    fun createMessagePush(text: String, type: NoticeType): List<ByteArray> {
+        val list = mutableListOf<ByteArray>()
+        val content = text.toByteArray()
+        var offset = 0
+        while (offset < content.size) {
+            val remaining = content.size - offset
+            val length = if (remaining > 17) 17 else remaining
+            list.add(ByteArray(length + 3).apply {
+                ByteBuffer.wrap(this).apply {
+                    put(BleConstantData.CMD_0x73)  //命令码
+                    put(list.size.toByte())
+                    put(type.value.toByte())  //通知的类型
+                    put(content, offset, length)
+                }
+            })
+            offset += length
         }
+        return list
     }
 
 
     /**
      * 获取当前手环心率
      */
-    fun createCurrentHeartRate(
-        cmd: Byte = 0x17,
-    ): ByteBuffer {
-        return ByteBuffer.allocate(4).apply {
-            put(cmd)
-            put(0)
-            put(0)
-            put(0)
+    fun createCurrentHeartRate(): ByteArray {
+        return ByteArray(4).apply {
+            ByteBuffer.wrap(this).apply {
+                put(BleConstantData.CMD_0x17)
+                put(0)
+                put(0)
+                put(0)
+            }
         }
     }
 
@@ -407,26 +436,27 @@ object CreateDataFactory {
      * 天气数据
      */
     fun createWeather(
-        list: List<BWeather>,   //当天天气在第0位
-        cmd: Byte = 0x05,
-    ): ByteBuffer {
-        return ByteBuffer.allocate(20).apply {
-            put(cmd)
-            list.forEach { bWeather ->
-                //天气类型
-                put(bWeather.type.value.toByte())
-                if (bWeather is BWeather.TodayWeather) {
-                    //当前温度正负
-                    put(bWeather.currentTemperatureType.value.toByte())
-                    //当前温度
-                    put(bWeather.currentTemperature.toByte())
+        list: List<BWeather>   //当天天气在第0位
+    ): ByteArray {
+        return ByteArray(20).apply {
+            ByteBuffer.wrap(this).apply {
+                put(BleConstantData.CMD_0x05)
+                list.forEach { bWeather ->
+                    //天气类型
+                    put(bWeather.type.value.toByte())
+                    if (bWeather is BWeather.TodayWeather) {
+                        //当前温度正负
+                        put(bWeather.currentTemperatureType.value.toByte())
+                        //当前温度
+                        put(bWeather.currentTemperature.toByte())
+                    }
+                    //最低温度
+                    put(bWeather.minType.value.toByte())
+                    put(bWeather.minTemperatureValue.toByte())
+                    //最高温度
+                    put(bWeather.maxType.value.toByte())
+                    put(bWeather.maxTemperatureValue.toByte())
                 }
-                //最低温度
-                put(bWeather.minType.value.toByte())
-                put(bWeather.minTemperatureValue.toByte())
-                //最高温度
-                put(bWeather.maxType.value.toByte())
-                put(bWeather.maxTemperatureValue.toByte())
             }
         }
     }
@@ -439,13 +469,14 @@ object CreateDataFactory {
         ultravioletRays: Byte,   //75代表7.5  紫外线
         pressure: Short, //大气压  不带小数点
         humidity: Byte, //湿度
-        cmd: Byte = 0x04,
-    ): ByteBuffer {
-        return ByteBuffer.allocate(5).apply {
-            put(cmd)
-            put(ultravioletRays)
-            putShort(pressure)
-            put(humidity)
+    ): ByteArray {
+        return ByteArray(5).apply {
+            ByteBuffer.wrap(this).apply {
+                put(BleConstantData.CMD_0x04)
+                put(ultravioletRays)
+                putShort(pressure)
+                put(humidity)
+            }
         }
     }
 
@@ -453,21 +484,21 @@ object CreateDataFactory {
     /**
      * 读取各种开关 提醒 抬腕亮屏 心率检测开关
      */
-    fun createReadNoticeEnables(): ByteBuffer{
+    fun createReadNoticeEnables(): ByteArray {
         return createRead(0x02)
     }
 
     /**
      * 读取闹钟
      */
-    fun createReadAlarms(): ByteBuffer{
+    fun createReadAlarms(): ByteArray {
         return createRead(0x03)
     }
 
     /**
      * 读取久坐提醒 勿扰模式 喝水提醒
      */
-    fun createReadNoticeSettings():ByteBuffer{
+    fun createReadNoticeSettings(): ByteArray {
         return createRead(0x04)
     }
 
@@ -476,18 +507,20 @@ object CreateDataFactory {
      * 读取表盘 温度单位 距离单位
      * 华摄氏 英制 公制
      */
-    fun createReadClockDialUnit(): ByteBuffer {
+    fun createReadClockDialUnit(): ByteArray {
         return createRead(0x05)
     }
 
     private fun createRead(
-        serialNumber: Int,
-        cmd: Byte = 0x62
-    ): ByteBuffer {
-        return ByteBuffer.allocate(2).apply {
-            put(cmd)
-            put(serialNumber.toByte())
+        serialNumber: Int
+    ): ByteArray {
+        return ByteArray(2).apply {
+            ByteBuffer.wrap(this).apply {
+                put(BleConstantData.CMD_0x62)
+                put(serialNumber.toByte())
+            }
         }
+
     }
 
     /**
@@ -497,15 +530,16 @@ object CreateDataFactory {
         clockNumber: Int = 0,  //表盘序号0-15
         temperatureUnit: TemperatureUnit,
         distanceUnit: DistanceUnit,
-        serialNumber: Int = 2,
-        cmd: Byte = 0x02
-    ): ByteBuffer{
-        return ByteBuffer.allocate(5).apply {
-            put(cmd)
-            put(serialNumber.toByte())
-            put(clockNumber.toByte())
-            put(temperatureUnit.value.toByte())
-            put(distanceUnit.value.toByte())
+        serialNumber: Int = 2
+    ): ByteArray {
+        return ByteArray(5).apply {
+            ByteBuffer.wrap(this).apply {
+                put(BleConstantData.CMD_0x02)
+                put(serialNumber.toByte())
+                put(clockNumber.toByte())
+                put(temperatureUnit.value.toByte())
+                put(distanceUnit.value.toByte())
+            }
         }
     }
 
@@ -513,37 +547,40 @@ object CreateDataFactory {
     /**
      * 同步联系人
      */
-    fun createSyncContacts(
-        list: List<ContactsItem>,
-        cmd: Byte = 0x66
-    ): List<ByteBuffer>{
-        return mutableListOf<ByteBuffer>().apply {
+    fun createSyncContacts(list: List<ContactsItem>): List<ByteArray> {
+        return mutableListOf<ByteArray>().apply {
             list.forEachIndexed { index, item ->
                 //最大值为1000
                 val tempIndex = index.toShort()
-                add(createByteBuffer(tempIndex, 0, item.name, cmd))
-                add(createByteBuffer(tempIndex, 1, item.mobile, cmd))
+                add(createByteBuffer(tempIndex, 0, item.name, BleConstantData.CMD_0x66))
+                add(createByteBuffer(tempIndex, 1, item.mobile, BleConstantData.CMD_0x66))
             }
         }
     }
 
-    private fun createByteBuffer(serialNumber: Short, type: Int, text: String, cmd: Byte):ByteBuffer{
-        return ByteBuffer.allocate(20).apply {
-            put(cmd)
-            putShort(serialNumber)
-            put(type.toByte())  //0 表示写入的是姓名 1 表示写入的是电话号码
-            put(0)  //预留的 默认0
-            val dataBytes = text.toByteArray()
-            if (limit() >= dataBytes.size){
-                put(dataBytes)
-                //如果后续还有空间对进行补0
-                if (hasRemaining()){
-                    fillZeros()
+    private fun createByteBuffer(
+        serialNumber: Short,
+        type: Int,
+        text: String,
+        cmd: Byte
+    ): ByteArray {
+        return ByteArray(20).apply {
+            ByteBuffer.wrap(this).apply {
+                put(cmd)
+                putShort(serialNumber)
+                put(type.toByte())  //0 表示写入的是姓名 1 表示写入的是电话号码
+                put(0)  //预留的 默认0
+                val dataBytes = text.toByteArray()
+                if (limit() >= dataBytes.size) {
+                    put(dataBytes)
+                    //如果后续还有空间对进行补0
+                    if (hasRemaining()) {
+                        fillZeros()
+                    }
+                } else {
+                    put(dataBytes.toMutableList().subList(0, limit()).toByteArray())
                 }
-            }else {
-                put(dataBytes.toMutableList().subList(0, limit()).toByteArray())
             }
-            flip()
         }
     }
 
@@ -551,9 +588,11 @@ object CreateDataFactory {
     /**
      * 获取屏幕规格
      */
-    fun createScreenSpecifications(cmd: Byte = 0x67): ByteBuffer {
-        return ByteBuffer.allocate(1).apply {
-            put(cmd)
+    fun createScreenSpecifications(): ByteArray {
+        return ByteArray(1).apply {
+            ByteBuffer.wrap(this).apply {
+                put(BleConstantData.CMD_0x67)
+            }
         }
     }
 
@@ -561,13 +600,12 @@ object CreateDataFactory {
     /**
      * 开始传输图片前开始发送准备动作
      */
-    fun createFastTransferBitmapPrepare(
-        cmd: Byte = 0x38,
-    ): ByteBuffer {
-        return ByteBuffer.allocate(5).apply {
-            put(cmd)
-            putShort((0xfffe).toShort())
-            flip()
+    fun createFastTransferBitmapPrepare(): ByteArray {
+        return ByteArray(5).apply {
+            ByteBuffer.wrap(this).apply {
+                put(BleConstantData.CMD_0x38)
+                putShort((0xfffe).toShort())
+            }
         }
     }
 
@@ -576,33 +614,32 @@ object CreateDataFactory {
      * 创建高速传递图片
      */
     fun createFastTransferBitMap(
-        bitmap: Bitmap,
-        cmd: Byte = 0x38
-    ): List<ByteBuffer>{
-        return mutableListOf<ByteBuffer>().apply {
+        bitmap: Bitmap
+    ): List<ByteArray> {
+        return mutableListOf<ByteArray>().also {
             val tempBytes = bitmap.toByteArrays()
             bitmap.recycle()
-            var byteBuffer: ByteBuffer
             var offset = 0
             while (offset < tempBytes.size) {
                 val remaining = tempBytes.size - offset
                 val length = if (remaining > 224) 224 else remaining
-                byteBuffer = ByteBuffer.allocate(length + 3)
-                byteBuffer.put(cmd)  //命令码
-                byteBuffer.putShort(size.toShort()) //序列号从0开始
-                byteBuffer.put(tempBytes, offset, length)
-                byteBuffer.flip()
-                add(byteBuffer)
+                it.add(ByteArray(length + 3).apply {
+                    ByteBuffer.wrap(this).apply {
+                        put(BleConstantData.CMD_0x38)  //命令码
+                        putShort(it.size.toShort()) //序列号从0开始
+                        put(tempBytes, offset, length)
+                    }
+                })
                 offset += length
             }
             //添加结束包
-            byteBuffer = ByteBuffer.allocate(4).apply {
-                put(cmd)
-                putShort((0xffff).toShort())
-                put(0)  //校验和
-                flip()
-            }
-            add(byteBuffer)
+            it.add(ByteArray(4).apply {
+                ByteBuffer.wrap(this).apply {
+                    put(BleConstantData.CMD_0x38)
+                    putShort((0xffff).toShort())
+                    put(0)  //校验和
+                }
+            })
         }
     }
 
@@ -610,147 +647,146 @@ object CreateDataFactory {
     /**
      * 高速传输bin 准备
      */
-    fun createFastTransferBinPrepare(
-        cmd: Byte = 0x39
-    ): ByteBuffer {
-        return ByteBuffer.allocate(6).apply {
-            put(cmd)
-            put(byteArrayOf(0xff.toByte(), 0xff.toByte(), 0xfe.toByte()))
-            putShort(0) //数据帧的有效数据大小
+    fun createFastTransferBinPrepare(): ByteArray {
+        return ByteArray(6).apply {
+            ByteBuffer.wrap(this).apply {
+                put(BleConstantData.CMD_0x39)
+                put(byteArrayOf(0xff.toByte(), 0xff.toByte(), 0xfe.toByte()))
+                putShort(0) //数据帧的有效数据大小
+            }
         }
+
     }
 
     /**
      * 传输bin文件
      */
     fun createFastTransferBin(
-        path: String,
-        cmd: Byte = 0x39
-    ): List<ByteBuffer> {
-        return mutableListOf<ByteBuffer>().apply {
-            val bytes = FileIOUtils.readFile2BytesByStream(path)
-            var byteBuffer: ByteBuffer
-            var offset = 0
-            while (offset < bytes.size) {
-                val remaining = bytes.size - offset
-                val length = if (remaining > 224) 224 else remaining
-                byteBuffer = ByteBuffer.allocate(length + 4)
-                byteBuffer.put(cmd)  //命令码
-                byteBuffer.put(size.toBytesLowerThree()) //序列号从0开始
-                byteBuffer.put(bytes, offset, length)
-                byteBuffer.flip()
-                add(byteBuffer)
-                offset += length
-            }
-            //添加结束包
-            byteBuffer = ByteBuffer.allocate(8).apply {
-                put(cmd)
+        path: String
+    ): List<ByteArray> {
+        val list = mutableListOf<ByteArray>()
+        val bytes = FileIOUtils.readFile2BytesByStream(path)
+        var offset = 0
+        while (offset < bytes.size) {
+            val remaining = bytes.size - offset
+            val length = if (remaining > 224) 224 else remaining
+            list.add(ByteArray(length + 4).apply {
+                ByteBuffer.wrap(this).apply {
+                    put(BleConstantData.CMD_0x39)  //命令码
+                    put(list.size.toBytesLowerThree()) //序列号从0开始
+                    put(bytes, offset, length)
+                }
+            })
+            offset += length
+        }
+        //添加结束包
+        list.add(ByteArray(8).apply {
+            ByteBuffer.wrap(this).apply {
+                put(BleConstantData.CMD_0x39)
                 put(byteArrayOf(0xff.toByte(), 0xff.toByte(), 0xff.toByte()))
                 putInt(bytes.size)  //校验和
-                flip()
             }
-            add(byteBuffer)
-        }
+        })
+        return list
     }
 
 
     /**
      * 名片 发送预备
      */
-    fun createCardPrepare(cmd: Byte = 0x3b): ByteBuffer {
-        return ByteBuffer.allocate(3).apply {
-            put(cmd)
-            putShort((0xfffe).toShort())
+    fun createCardPrepare(): ByteArray {
+        return ByteArray(3).apply {
+            ByteBuffer.wrap(this).apply {
+                put(BleConstantData.CMD_0x3b)
+                putShort((0xfffe).toShort())
+            }
         }
     }
 
     fun crateCard(
-        bitmap: Bitmap,
-        cmd: Byte = 0x3b
-    ): List<ByteBuffer>{
-        return mutableListOf<ByteBuffer>().apply {
-            val content = bitmap.toByteArrays()
-            bitmap.recycle()
+        bitmap: Bitmap
+    ): List<ByteArray> {
 
-            var packet: ByteBuffer
-            var offset = 0
-            while (offset < content.size) {
-                val remaining = content.size - offset
-                val length = if (remaining > 16) 16 else remaining
-                packet = ByteBuffer.allocate(length + 4)
-                packet.put(cmd)  //命令码
-                packet.put(size.toBytesLowerThree()) //序列号从0开始
-                packet.put(content, offset, length)
-                packet.flip()
-                add(packet)
-                offset += length
-            }
-            //结束
-            packet = ByteBuffer.allocate(4).apply {
-                put(cmd)
-                put((0xffffff).toBytesLowerThree())
-            }
-            add(packet)
+        val list = mutableListOf<ByteArray>()
+        val content = bitmap.toByteArrays()
+        bitmap.recycle()
+        var offset = 0
+        while (offset < content.size) {
+            val remaining = content.size - offset
+            val length = if (remaining > 16) 16 else remaining
+            list.add(
+                ByteArray(length + 4).apply {
+                    ByteBuffer.wrap(this).apply {
+                        put(BleConstantData.CMD_0x3b)  //命令码
+                        put(list.size.toBytesLowerThree()) //序列号从0开始
+                        put(content, offset, length)
+                    }
+                }
+            )
+            offset += length
         }
+        //结束
+        list.add(
+            ByteArray(4).apply {
+                ByteBuffer.wrap(this).apply {
+                    put(BleConstantData.CMD_0x3b)
+                    put((0xffffff).toBytesLowerThree())
+                }
+            }
+        )
+        return list
+
+
     }
 
 
     /**
      * 传输运动轨迹 预备
      */
-    fun createFastTransferTrackPrepare(
-        cmd: Byte = 0x3c
-    ): ByteBuffer {
-        return ByteBuffer.allocate(9).apply {
-            put(cmd)
-            putShort(0xffe)
-            putShort(0)  //数据帧有效数据大小
-            putInt((System.currentTimeMillis() / 1000).toInt())
+    fun createFastTransferTrackPrepare(): ByteArray {
+        return ByteArray(9).apply {
+            ByteBuffer.wrap(this).apply {
+                put(BleConstantData.CMD_0x3c)
+                putShort(0xffe)
+                putShort(0)  //数据帧有效数据大小
+                putInt((System.currentTimeMillis() / 1000).toInt())
+            }
         }
     }
 
+    /**
+     * 传输运动轨迹
+     */
     fun createFastTransferTrack(
-        bitmap: Bitmap,
-        cmd: Byte = 0x3c
-    ): List<ByteBuffer> {
-        return mutableListOf<ByteBuffer>().apply {
-            val content = bitmap.toByteArrays()
-            bitmap.recycle()
-            var packet: ByteBuffer
-            var offset = 0
-            while (offset < content.size) {
-                val remaining = content.size - offset
-                val length = if (remaining > 224) 224 else remaining
-                packet = ByteBuffer.allocate(length + 3)
-                packet.put(cmd)  //命令码
-                packet.putShort(size.toShort()) //序列号从0开始
-                packet.put(content, offset, length)
-                packet.flip()
-                add(packet)
-                offset += length
-            }
-            //结束
-            packet = ByteBuffer.allocate(4).apply {
-                put(cmd)
+        bitmap: Bitmap
+    ): List<ByteArray> {
+        val list = mutableListOf<ByteArray>()
+        val content = bitmap.toByteArrays()
+        bitmap.recycle()
+        var offset = 0
+        while (offset < content.size) {
+            val remaining = content.size - offset
+            val length = if (remaining > 224) 224 else remaining
+            list.add(
+                ByteArray(length + 3).apply {
+                    ByteBuffer.wrap(this).apply {
+                        put(BleConstantData.CMD_0x3c)  //命令码
+                        putShort(list.size.toShort()) //序列号从0开始
+                        put(content, offset, length)
+                    }
+                }
+            )
+            offset += length
+        }
+        //结束
+        list.add(ByteArray(4).apply {
+            ByteBuffer.wrap(this).apply {
+                put(BleConstantData.CMD_0x3c)
                 put((0xffff).toBytesLowerThree())
             }
-            add(packet)
-        }
+        })
+        return list
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 }

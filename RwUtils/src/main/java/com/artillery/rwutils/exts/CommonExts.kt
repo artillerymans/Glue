@@ -47,6 +47,14 @@ fun Int.toBytesLowerThree(): ByteArray{
     return dst
 }
 
+fun ByteArray.toBuffer(): ByteBuffer{
+    return ByteBuffer.wrap(this)
+}
+
+fun zeroByte(): Byte{
+    return 0.toByte()
+}
+
 
 
 
