@@ -33,5 +33,5 @@ dependencies {
     implementation rootProject.ext.NativeAndroidX.APPCOMPAT
     implementation rootProject.ext.NativeAndroidX.MATERIAL
     /**蓝牙扫描*/
-    implementation rootProject.ext.Ble.SCANNER
+    api rootProject.ext.Ble.SCANNER
 }

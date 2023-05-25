@@ -55,6 +55,10 @@ fun zeroByte(): Byte{
     return 0.toByte()
 }
 
+fun Byte.byte2Int(): Int{
+    return this.toInt() and 0xff
+}
+
 
 
 

@@ -35,8 +35,8 @@ dependencies {
     implementation rootProject.ext.NativeAndroidX.APPCOMPAT
     implementation rootProject.ext.NativeAndroidX.MATERIAL
     /*蓝牙连接*/
-    implementation rootProject.ext.Ble.BLE_CONNECT_KTX
-    implementation rootProject.ext.Ble.BLE_CONNECT_LIVEDATA
+    api rootProject.ext.Ble.BLE_CONNECT_KTX
+    api rootProject.ext.Ble.BLE_CONNECT_LIVEDATA
 
     implementation 'com.blankj:utilcodex:1.31.1'
 }

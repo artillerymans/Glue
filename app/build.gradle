@@ -54,9 +54,13 @@ dependencies {
     implementation rootProject.ext.Compose.LIFECYCLE_VIEWMODEL_COMPOSE
     implementation rootProject.ext.Compose.LIFECYCLE_RUNTIME_COMPOSE
     implementation rootProject.ext.Compose.NAVIGATION
-
     /**蓝牙扫描*/
-    implementation 'no.nordicsemi.android.common:uiscanner:1.6.3'
+    implementation rootProject.ext.Ble.SCANNER
+    implementation project(path: ':ComposeUtils')
+
+    implementation 'com.blankj:utilcodex:1.31.1'
+    implementation project(path: ':BleConnect')
+
 
     def composeBom = platform('androidx.compose:compose-bom:2023.01.00')
     implementation composeBom

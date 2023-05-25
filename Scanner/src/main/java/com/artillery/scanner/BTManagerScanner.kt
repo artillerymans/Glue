@@ -22,6 +22,16 @@ class BTManagerScanner private constructor() {
         BleScantCallBack()
     }
 
+    companion object{
+        fun getInstance() = Helper.instance
+    }
+    private object Helper{
+        val instance = BTManagerScanner()
+    }
+
+
+
+
     fun startScan(
         filter: List<ScanFilter> = emptyList(),
         settings: ScanSettings = ScanSettings.Builder().build(),

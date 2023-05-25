@@ -1,9 +1,11 @@
 package com.artillery.rwutils
 
+import com.artillery.rwutils.cmd.BleConstantData
 import com.artillery.rwutils.exts.toBytes
 import com.artillery.rwutils.exts.toBytesLowerThree
 import com.blankj.utilcode.util.ConvertUtils
 import com.artillery.rwutils.crc.crc
+import com.artillery.rwutils.exts.byte2Int
 import com.artillery.rwutils.exts.toBuffer
 import com.artillery.rwutils.exts.zeroByte
 import kotlinx.coroutines.CoroutineScope
@@ -17,6 +19,7 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import org.junit.Test
 
 import java.nio.ByteBuffer
+import kotlin.experimental.and
 
 /**
  * Example local unit test, which will execute on the development machine (host).
@@ -25,6 +28,27 @@ import java.nio.ByteBuffer
  */
 class ExampleUnitTest {
 
+    @Test
+    fun ansy0xb3(){
+        val hexString = "B30100000C4A0074000008C50000067E"
+        val bytes = ConvertUtils.hexString2Bytes(hexString)
+        val buffer = bytes.toBuffer()
+        val cmd = buffer.get()
+       if (cmd.byte2Int() == BleConstantData.REPLY_CMD_B3) {
+           //0x01：实时步数数据 有效
+           val number1 = buffer.get()
+           //总步数
+           val step = buffer.int
+           //卡路里
+           val calorie = buffer.short
+           //总里程 单位米
+           val totalMileage = buffer.int
+           //活动时长 单位秒
+           val activeTime = buffer.int
+
+           println("step = $step, $calorie, $totalMileage, $activeTime")
+       }
+    }
 
     @OptIn(DelicateCoroutinesApi::class)
     @Test

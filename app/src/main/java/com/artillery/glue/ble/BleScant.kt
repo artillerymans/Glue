@@ -1,52 +1,177 @@
 package com.artillery.glue.ble
 
+import android.Manifest
+import android.annotation.SuppressLint
+import android.bluetooth.BluetoothDevice
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import com.artillery.compose.click
+import com.artillery.compose.heightSpacerLine
+import com.artillery.compose.paddingHorizontal
 import com.artillery.glue.ble.viewModels.BleScantViewModel
+import com.blankj.utilcode.util.LogUtils
+import com.blankj.utilcode.util.ToastUtils
 
 /**
  * @author : zhiweizhu
  * create on: 2023/4/23 下午3:54
  */
 
+
+@SuppressLint("MissingPermission")
 @Composable
-fun BleScantCompose(nav: NavController) {
+fun BleScantCompose(nav: NavController, onSelectDevice: (BluetoothDevice) -> Unit) {
     val scantViewModel: BleScantViewModel = viewModel()
     Column(
         Modifier.fillMaxSize()
     ) {
 
-        val list = listOf<String>("1122", "2222", "3333", "33333")
+        val listDevices by scantViewModel.listDevicesFlow.collectAsStateWithLifecycle()
 
-        LazyColumn(
-            Modifier
-                .fillMaxWidth()
-                .weight(1f)){
-            items(list){
-                Text(text = it)
+        LogUtils.d("BleScantCompose: nav.hashCode()=> ${nav.hashCode()}")
+        DisposableEffect(nav.hashCode()){
+
+            onDispose {
+                scantViewModel.stopScant()
             }
         }
-        Text(text = "开始扫描")
+
+
+        val requestPermissionLauncher = rememberLauncherForActivityResult(
+            ActivityResultContracts.RequestMultiplePermissions()
+        ) { result ->
+            val tempList = result.filter { it.value }
+            //说明权限全部被授予
+            if (tempList.size == result.values.size) {
+                scantViewModel.startScant()
+            } else {
+                val q1 =
+                    result.firstNotNullOf { it.key == Manifest.permission.ACCESS_COARSE_LOCATION && it.value }
+                val q2 =
+                    result.firstNotNullOf { it.key == Manifest.permission.BLUETOOTH && it.value }
+                if (q1 && q2) {
+                    scantViewModel.startScant()
+                } else {
+                    ToastUtils.showShort("权限被拒绝")
+                }
+            }
+        }
+
+        BoxWithConstraints(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+        ) {
+            LazyColumn(
+                Modifier
+                    .fillMaxWidth()
+                    .height(maxHeight)
+            ) {
+                items(listDevices) {
+                    Column(
+                        modifier = Modifier
+                            .click {
+                                onSelectDevice.invoke(it)
+                            }
+                            .fillMaxWidth()
+                            .wrapContentHeight()
+                            .paddingHorizontal(10.dp),
+                        verticalArrangement = Arrangement.spacedBy(5.dp)
+                    ) {
+
+                        Text(
+                            text = it.name.orEmpty().ifEmpty { "未知名称" },
+                            style = TextStyle(fontSize = 18.sp)
+                        )
+
+                        Text(
+                            text = it.address,
+                            style = TextStyle(fontSize = 14.sp)
+                        )
+
+                    }
+
+                    heightSpacerLine(2.dp)
+
+                }
+            }
+        }
+
+        Text(
+            text = "开始扫描",
+            modifier = Modifier
+                .clip(RoundedCornerShape(10.dp))
+                .background(Color.Green)
+                .click {
+                    requestPermissionLauncher.launch(
+                        arrayListOf<String>()
+                            .apply {
+                                add(Manifest.permission.BLUETOOTH)
+
+                                add(Manifest.permission.ACCESS_COARSE_LOCATION)
+
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                                    add(Manifest.permission.ACCESS_FINE_LOCATION)
+                                }
+
+                                if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.R) {
+                                    add(Manifest.permission.BLUETOOTH_ADMIN)
+                                }
+
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                                    add(Manifest.permission.BLUETOOTH_SCAN)
+                                    add(Manifest.permission.BLUETOOTH_CONNECT)
+                                }
+                            }
+                            .toTypedArray()
+                    )
+
+                }
+                .fillMaxWidth()
+                .height(IntrinsicSize.Min)
+                .padding(vertical = 10.dp),
+            style = TextStyle(
+                color = Color.White, fontSize = 16.sp,
+                fontWeight = FontWeight.Bold, textAlign = TextAlign.Center
+            )
+        )
     }
 
 }
 
-@Preview
-@Composable
-fun Def() {
-    val nav = rememberNavController()
-    BleScantCompose(nav = nav)
-}
