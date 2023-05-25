@@ -39,7 +39,6 @@ import no.nordicsemi.android.ble.ktx.stateAsFlow
  */
 class BleConnectViewModel : ViewModel() {
 
-    //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
     private val mBleDataChangeChannel: Channel<ByteArray> by lazy(LazyThreadSafetyMode.NONE) {
         Channel()
     }
