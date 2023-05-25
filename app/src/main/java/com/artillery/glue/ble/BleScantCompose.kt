@@ -6,9 +6,7 @@ import android.bluetooth.BluetoothDevice
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -21,10 +19,7 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -34,13 +29,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
 import com.artillery.compose.click
 import com.artillery.compose.heightSpacerLine
 import com.artillery.compose.paddingHorizontal
@@ -58,13 +51,12 @@ import com.blankj.utilcode.util.ToastUtils
 @Composable
 fun BleScantCompose(nav: NavController, onSelectDevice: (BluetoothDevice) -> Unit) {
     val scantViewModel: BleScantViewModel = viewModel()
+    LogUtils.d("BleScantCompose: viewMode.hasCode = ${scantViewModel.hashCode()}")
     Column(
         Modifier.fillMaxSize()
     ) {
 
         val listDevices by scantViewModel.listDevicesFlow.collectAsStateWithLifecycle()
-
-        LogUtils.d("BleScantCompose: nav.hashCode()=> ${nav.hashCode()}")
         DisposableEffect(nav.hashCode()){
 
             onDispose {
@@ -76,19 +68,27 @@ fun BleScantCompose(nav: NavController, onSelectDevice: (BluetoothDevice) -> Uni
         val requestPermissionLauncher = rememberLauncherForActivityResult(
             ActivityResultContracts.RequestMultiplePermissions()
         ) { result ->
+            result.map { value ->
+                LogUtils.d("BleScantCompose: ${value.key}, ${value.value}")
+                if (Manifest.permission.ACCESS_COARSE_LOCATION == value.key){
+                    LogUtils.d("BleScantCompose: 存在匹配关键权限")
+                }
+            }
+
             val tempList = result.filter { it.value }
+
             //说明权限全部被授予
+            LogUtils.d("BleScantCompose: tempList.size = ${tempList.size}, result.values.size = ${result.values.size}")
             if (tempList.size == result.values.size) {
                 scantViewModel.startScant()
             } else {
-                val q1 =
-                    result.firstNotNullOf { it.key == Manifest.permission.ACCESS_COARSE_LOCATION && it.value }
-                val q2 =
-                    result.firstNotNullOf { it.key == Manifest.permission.BLUETOOTH && it.value }
-                if (q1 && q2) {
+                val q1 = result.firstNotNullOfOrNull { value -> if (value.key.equals(Manifest.permission.ACCESS_COARSE_LOCATION)) value.value else false } ?: false
+                LogUtils.d("BleScantCompose: q1 = $q1")
+                if (q1) {
                     scantViewModel.startScant()
                 } else {
                     ToastUtils.showShort("权限被拒绝")
+                    scantViewModel.startScant()
                 }
             }
         }
@@ -143,7 +143,6 @@ fun BleScantCompose(nav: NavController, onSelectDevice: (BluetoothDevice) -> Uni
                         arrayListOf<String>()
                             .apply {
                                 add(Manifest.permission.BLUETOOTH)
-
                                 add(Manifest.permission.ACCESS_COARSE_LOCATION)
 
                                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {

@@ -24,7 +24,11 @@ class BleHelper private constructor(){
      */
     fun getBleDeviceManager(key: String? = null): BleDeviceManager?{
         return if (key.isNullOrEmpty()){
-            mBleManagerMap.values.last()
+            if (mBleManagerMap.values.isEmpty()){
+                null
+            }else {
+                mBleManagerMap.values.last()
+            }
         }else {
             mBleManagerMap[key]
         }

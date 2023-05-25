@@ -1,6 +1,7 @@
 package com.artillery.rwutils
 
 import com.artillery.rwutils.cmd.BleConstantData
+import com.artillery.rwutils.exts.byte2Int
 import com.artillery.rwutils.exts.toBuffer
 import com.artillery.rwutils.exts.zeroByte
 import com.artillery.rwutils.model.BleResult
@@ -22,7 +23,7 @@ object AnalyzeDataFactory {
         val buffer = bytes.toBuffer()
         val cmd = buffer.get()
         val code = buffer.get()
-        return BleResult(cmd.toInt(), code.toInt(), 0)
+        return BleResult(cmd.byte2Int(), code.toInt(), 0)
     }
 
     /**
@@ -31,7 +32,7 @@ object AnalyzeDataFactory {
     fun analyze0x83For0x03(bytes: ByteArray) {
         val buffer = bytes.toBuffer()
         val cmd = buffer.get()
-        if (cmd.toInt() == BleConstantData.REPLY_CMD_83) {
+        if (cmd.byte2Int() == BleConstantData.REPLY_CMD_83) {
             //项目固件名称最长 8 字节
             val versionStr = ByteArray(8).apply {
                 buffer.get(this)
@@ -71,11 +72,11 @@ object AnalyzeDataFactory {
     fun analyze0x82For0x02(bytes: ByteArray): BleResult<Int> {
         val buffer = bytes.toBuffer()
         val cmd = buffer.get()
-        return if (cmd.toInt() == BleConstantData.REPLY_CMD_82){
+        return if (cmd.byte2Int() == BleConstantData.REPLY_CMD_82){
             //序列号 共用0x02命令
             val sequence = buffer.get()
             val code = buffer.get()
-            BleResult(cmd.toInt(), code.toInt(), sequence.toInt())
+            BleResult(cmd.byte2Int(), code.toInt(), sequence.toInt())
         }else {
             BleResult<Int>()
         }
@@ -87,13 +88,13 @@ object AnalyzeDataFactory {
     fun analyze0xD1For0x51(bytes: ByteArray): BleResult<Int>{
         val buffer = bytes.toBuffer()
         val cmd = buffer.get()
-        return if (cmd.toInt() == BleConstantData.REPLY_CMD_D1){
+        return if (cmd.byte2Int() == BleConstantData.REPLY_CMD_D1){
             //0x01：查找手环图标显示并震动
             // 0x00：查找手环图标不显示，并关闭震动
             // 0xEE：收到错误数据
             val status = buffer.get().toInt()
             BleResult(
-                cmd.toInt(),
+                cmd.byte2Int(),
                 -1,
                 status
             )
@@ -108,11 +109,11 @@ object AnalyzeDataFactory {
     fun analyze0x53(bytes: ByteArray): BleResult<Int>{
         val buffer = bytes.toBuffer()
         val cmd = buffer.get()
-        return if (cmd.toInt() == BleConstantData.REPLY_CMD_53){
+        return if (cmd.byte2Int() == BleConstantData.REPLY_CMD_53){
             //命令： 0x01：寻找手机（enable） 0x00：寻找手机（disable）
             val status = buffer.get().toInt()
             BleResult(
-                cmd.toInt(),
+                cmd.byte2Int(),
                 -1,
                 status
             )
@@ -127,12 +128,12 @@ object AnalyzeDataFactory {
     fun analyze0xD2For0x52(bytes: ByteArray): BleResult<Int>{
         val buffer = bytes.toBuffer()
         val cmd = buffer.get()
-        return if (cmd.toInt() == BleConstantData.REPLY_CMD_D2){
+        return if (cmd.byte2Int() == BleConstantData.REPLY_CMD_D2){
             //0x01：APP 进入拍照界面（enable）
             // 0x00：APP 退出拍照界面（disable）
             val status = buffer.get().toInt()
             BleResult(
-                cmd.toInt(),
+                cmd.byte2Int(),
                 -1,
                 status
             )
@@ -150,7 +151,7 @@ object AnalyzeDataFactory {
     fun analyze0xB3(bytes: ByteArray): BleResult<RealTimeData>{
         val buffer = bytes.toBuffer()
         val cmd = buffer.get()
-        return if (cmd.toInt() == BleConstantData.REPLY_CMD_B3){
+        return if (cmd.byte2Int() == BleConstantData.REPLY_CMD_B3){
             //0x01：实时步数数据 有效
             val number1 = buffer.get()
             //总步数
@@ -163,7 +164,7 @@ object AnalyzeDataFactory {
             val activeTime = buffer.int
 
             BleResult(
-                cmd.toInt(),
+                cmd.byte2Int(),
                 -1,
                 RealTimeData(
                     step,
@@ -184,11 +185,11 @@ object AnalyzeDataFactory {
     fun analyze0x94For0x14(bytes: ByteArray): BleResult<Int>{
         val buffer = bytes.toBuffer()
         val cmd = buffer.get()
-        return if (cmd.toInt() == BleConstantData.REPLY_CMD_94){
+        return if (cmd.byte2Int() == BleConstantData.REPLY_CMD_94){
             //电量 0到100
             val batteryLevel = buffer.get().toInt()
             BleResult(
-                cmd.toInt(),
+                cmd.byte2Int(),
                 -1,
                 batteryLevel
             )
@@ -203,7 +204,7 @@ object AnalyzeDataFactory {
     fun analyze0x9fFor0x1f(bytes: ByteArray): BleResult<SoftVersionModel>{
         val buffer = bytes.toBuffer()
         val cmd = buffer.get()
-        return if (cmd.toInt() == BleConstantData.REPLY_CMD_9F){
+        return if (cmd.byte2Int() == BleConstantData.REPLY_CMD_9F){
             //编译日期(Sep 12,2017)
             val versionDes = ByteArray(11).apply {
                 buffer.get(this)
@@ -214,7 +215,7 @@ object AnalyzeDataFactory {
             }.map { byte -> byte.toInt() }.joinToString(".")
 
             BleResult(
-                cmd.toInt(),
+                cmd.byte2Int(),
                 -1,
                 SoftVersionModel(
                     versionDes,

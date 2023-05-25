@@ -11,6 +11,7 @@ import com.blankj.utilcode.util.LogUtils
 import com.blankj.utilcode.util.Utils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -69,6 +70,9 @@ class BleDeviceManager(context: Context = Utils.getApp()) : BleManager(context) 
         }
     }
 
+    fun setChannel(channel: Channel<ByteArray>){
+        mReadNotificationCharacteristicChannel = channel
+    }
 
     fun post(bytes: List<ByteArray>, writeType: Int = BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE){
         mDefaultScope.launch {
@@ -78,7 +82,7 @@ class BleDeviceManager(context: Context = Utils.getApp()) : BleManager(context) 
 
     private suspend fun send(bytes: List<ByteArray>,
                              @WriteType writeType: Int = BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE){
-        bytes.forEach { data ->
+        bytes.forEachIndexed{ index, data ->
             val tempData = suspendCancellableCoroutine { continuation ->
                 writeCharacteristic(
                     mWriteCharacteristic,
@@ -87,10 +91,10 @@ class BleDeviceManager(context: Context = Utils.getApp()) : BleManager(context) 
                 ).done {
                     continuation.resumeWith(Result.success(data))
                 }.fail { device, status ->
-                    continuation.resumeWith(Result.failure(Exception("Could not set animationFactor: $status")))
+                    continuation.resumeWith(Result.failure(Exception("写入数据失败，状态码 ->$status")))
                 }.enqueue()
             }
-            LogUtils.d("Write:->${ConvertUtils.bytes2HexString(tempData)}")
+            LogUtils.d("写入数据$index:->${ConvertUtils.bytes2HexString(tempData)}")
         }
     }
 
@@ -126,6 +130,14 @@ class BleDeviceManager(context: Context = Utils.getApp()) : BleManager(context) 
         readCharacteristic(mReadNotificationCharacteristic).with { device, data ->
             LogUtils.d("initialize: 读操作 --> ${ConvertUtils.bytes2HexString(data.value)}")
         }.enqueue()
+
+        bluetoothDevice?.also {
+            if (it.bondState == BluetoothDevice.BOND_NONE){
+                //发起配对
+                bluetoothDevice?.createBond()
+            }
+        }
+
 
         /*beginAtomicRequestQueue()
             .add(

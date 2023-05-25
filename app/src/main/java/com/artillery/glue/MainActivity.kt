@@ -44,7 +44,7 @@ class MainActivity : ComponentActivity() {
                 ) {
                     NavHost(
                         navController = navController,
-                        startDestination = NavConstant.Ble.Scant
+                        startDestination = NavConstant.Ble.Tools
                     ){
 
                         composable(NavConstant.Ble.Tools){
@@ -68,18 +68,4 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
 
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    GlueTheme {
-        Greeting("Android")
-    }
-}

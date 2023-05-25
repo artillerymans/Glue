@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.artillery.glue.ble.viewModels.BleConnectViewModel
+import com.blankj.utilcode.util.LogUtils
 
 /**
  * @author : zhiweizhu
@@ -22,7 +23,7 @@ import com.artillery.glue.ble.viewModels.BleConnectViewModel
  */
 @Composable
 fun BleConnectCompose(nav: NavController, device: BluetoothDevice? = null, viewModel: BleConnectViewModel) {
-
+    LogUtils.d("BleConnectCompose: viewModel.hasCode = ${viewModel.hashCode()}")
     val state by viewModel.connectStatusFlow.collectAsStateWithLifecycle()
 
 
