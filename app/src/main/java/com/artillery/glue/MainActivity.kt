@@ -54,7 +54,8 @@ class MainActivity : ComponentActivity() {
                         composable(NavConstant.Ble.Scant){
                             BleScantCompose(nav = navController){
                                 selectDevice.value = it
-                                navController.navigate(NavConstant.Ble.ConnectBle)
+                                mConnectViewModel.connect(it)
+                                navController.navigateUp()
                             }
                         }
 

@@ -99,7 +99,7 @@ object CreateDataFactory {
     fun createWatchFunctionList(): ByteArray {
         return ByteArray(2).apply {
             ByteBuffer.wrap(this).apply {
-                put(BleConstantData.HEAD_0X03)
+                put(BleConstantData.CMD_0X03)
                 put(BleConstantData.RESERVED_DEF_0X00)
             }
         }
@@ -194,7 +194,7 @@ object CreateDataFactory {
                 list.forEach { item ->
                     put(item.enable.toByte())
                     putShort(item.startTime)
-                    put(item.choiceDays.fold(0.toByte()) { acc, day -> acc or day })
+                    put(item.choiceDays.fold(0.toByte()) { acc, day -> acc or day.byte })
                 }
             }
         }
@@ -207,13 +207,16 @@ object CreateDataFactory {
     fun createSettingRemind(
         list: List<RemindItem>,
     ): ByteArray {
-        return ByteArray(20).apply {
+        return ByteArray(19).apply {
             ByteBuffer.wrap(this).apply {
                 put(BleConstantData.CMD_0x02)
                 put(0x04)
                 list.forEach { item ->
                     put(item.enable.toByte())
-                    put(item.interval)
+                    //勿扰模式没有间隔时间
+                    if (item.interval > 0.toByte()){
+                        put(item.interval)
+                    }
                     put(item.startHour)
                     put(item.startMinute)
                     put(item.endHour)

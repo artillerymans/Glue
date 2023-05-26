@@ -16,10 +16,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.artillery.connect.BleDeviceManager
 import com.artillery.connect.BleHelper
+import com.artillery.glue.model.DebugBaseItem
 import com.artillery.glue.model.DebugDataType
-import com.artillery.glue.model.DebugItem
+import com.artillery.rwutils.AnalyzeDataFactory
+import com.artillery.rwutils.cmd.BleConstantData
 import com.artillery.rwutils.exts.byte2Int
+import com.artillery.rwutils.exts.toBuffer
 import com.blankj.utilcode.util.ConvertUtils
+import com.blankj.utilcode.util.GsonUtils
 import com.blankj.utilcode.util.LogUtils
 import com.blankj.utilcode.util.ThreadUtils
 import com.blankj.utilcode.util.TimeUtils
@@ -97,8 +101,8 @@ class BleConnectViewModel : ViewModel() {
     /**
      * 读写数据集合
      */
-    private var _readWriteListFlow = MutableStateFlow<List<DebugItem>>(emptyList())
-    val readWriteListFlow: StateFlow<List<DebugItem>> = _readWriteListFlow
+    private var _readWriteListFlow = MutableStateFlow<List<DebugBaseItem>>(emptyList())
+    val readWriteListFlow: StateFlow<List<DebugBaseItem>> = _readWriteListFlow
 
 
     private fun addDevice(device: BluetoothDevice) {
@@ -134,7 +138,7 @@ class BleConnectViewModel : ViewModel() {
 
 
     private fun removeDevice(device: BluetoothDevice) {
-        BleHelper.getInstance().remove(device.address)?.disconnect()
+        BleHelper.getInstance().remove(device.address)?.close()
     }
 
     fun disConnect() {
@@ -185,6 +189,7 @@ class BleConnectViewModel : ViewModel() {
                         DebugDataType.notice
                     )
 
+                    pack(value)
                 }
             }
         }
@@ -193,6 +198,8 @@ class BleConnectViewModel : ViewModel() {
             addAction(BluetoothDevice.ACTION_BOND_STATE_CHANGED)
             addAction(BluetoothAdapter.ACTION_STATE_CHANGED)
         })
+
+        enableBleServices()
     }
 
 
@@ -202,6 +209,343 @@ class BleConnectViewModel : ViewModel() {
     }
 
 
+    /**
+     * 缓存用的
+     */
+    private val mCacheList: MutableList<ByteArray> by lazy(LazyThreadSafetyMode.NONE) {
+        mutableListOf()
+    }
+
+    fun pack(bytes: ByteArray) {
+        val buffer = bytes.toBuffer()
+        val cmd = buffer.get().byte2Int()
+        when (cmd) {
+            BleConstantData.REPLY_CMD_81 -> {
+                val state = buffer.get().byte2Int()
+                noticeRefreshUI(
+                    DebugBaseItem.PackItem(
+                        "设置日期时间${desString(state)}",
+                        ConvertUtils.bytes2HexString(bytes)
+                    )
+                )
+            }
+
+            BleConstantData.REPLY_CMD_82 -> {
+                val index = buffer.get().byte2Int()
+                val state = buffer.get().byte2Int()
+                val des = when (index) {
+                    0x01 -> {
+                        "设置用户信息${desString(state)}"
+                    }
+
+                    0x02 -> {
+                        "设置通知开关${desString(state)}"
+                    }
+
+                    0x03 -> {
+                        "设置闹钟${desString(state)}"
+                    }
+
+                    0x04 -> {
+                        "设置勿扰、久坐、喝水提醒等${desString(state)}"
+                    }
+
+                    else -> {
+                        "设置未知的信息序号$index"
+                    }
+                }
+                noticeRefreshUI(
+                    DebugBaseItem.PackItem(
+                        des,
+                        ConvertUtils.bytes2HexString(bytes)
+                    )
+                )
+            }
+
+            BleConstantData.REPLY_CMD_94 -> {
+                val battery = buffer.get().byte2Int()
+                noticeRefreshUI(
+                    DebugBaseItem.PackItem(
+                        "当前电量: $battery",
+                        ConvertUtils.bytes2HexString(bytes)
+                    )
+                )
+            }
+
+            BleConstantData.REPLY_CMD_D1 -> {
+                val state = buffer.get().byte2Int()
+                noticeRefreshUI(
+                    DebugBaseItem.PackItem(
+                        "查找手环->${
+                            when (state) {
+                                0x01 -> "图标显示并振动"
+                                0x02 -> "图标不显示，并关闭振动"
+                                BleConstantData.FAIL_BLE_CODE -> "失败"
+                                else -> "未知状态"
+                            }
+                        }",
+                        ConvertUtils.bytes2HexString(bytes)
+                    )
+                )
+            }
+
+            BleConstantData.REPLY_CMD_53 -> {
+                val state = buffer.get().byte2Int()
+                noticeRefreshUI(
+                    DebugBaseItem.PackItem(
+                        "寻找手机: ${desSwitch(state)}",
+                        ConvertUtils.bytes2HexString(bytes)
+                    )
+                )
+            }
+
+            BleConstantData.REPLY_CMD_9F -> {
+                val result = AnalyzeDataFactory.analyze0x9fFor0x1f(buffer.array())
+                LogUtils.d("pack: ${GsonUtils.toJson(result)}")
+                val stringBuilder = StringBuilder().apply {
+                    appendLine("编译日期：${result.data?.versionDes}")
+                    append("版本：${result.data?.versionCode}")
+                }
+                noticeRefreshUI(
+                    DebugBaseItem.PackItem(
+                        stringBuilder.toString(),
+                        ConvertUtils.bytes2HexString(bytes)
+                    )
+                )
+            }
+
+            BleConstantData.REPLY_CMD_93 -> {
+                val result = AnalyzeDataFactory.analyze0x93For0x13(buffer.array())
+                LogUtils.d("pack: ${GsonUtils.toJson(result)}")
+                val stringBuilder = StringBuilder().apply {
+                    result.data?.let { data ->
+                        if (data.hour == 0xff) {
+                            appendLine("总步数-> ${data.year}-${data.month}-${data.day}")
+                        } else {
+                            appendLine("步数-> ${data.year}-${data.month}-${data.day} ${data.hour}")
+                        }
+                        append(GsonUtils.toJson(result.data))
+                    } ?: append("无步数信息")
+                }
+                noticeRefreshUI(
+                    DebugBaseItem.PackItem(
+                        stringBuilder.toString(),
+                        ConvertUtils.bytes2HexString(bytes)
+                    )
+                )
+            }
+
+
+            BleConstantData.REPLY_CMD_95 -> {
+                val result = AnalyzeDataFactory.analyze0x95For0x15(buffer.array())
+                LogUtils.d("pack: ${GsonUtils.toJson(result)}")
+                val stringBuilder = StringBuilder().apply {
+                    result.data?.let { data ->
+                        if (data.isNotEmpty()) {
+                            appendLine(
+                                "睡眠数据日期->${
+                                    TimeUtils.millis2String(
+                                        data.last().timeStamp.toLong(),
+                                        TimeUtils.getSafeDateFormat("yyyy-MM-dd")
+                                    )
+                                }"
+                            )
+
+                            data.forEach { sleep ->
+                                appendLine(GsonUtils.toJson(sleep))
+                            }
+                        }
+                    } ?: append("无睡眠信息")
+                }
+                noticeRefreshUI(
+                    DebugBaseItem.PackItem(
+                        stringBuilder.toString(),
+                        ConvertUtils.bytes2HexString(bytes)
+                    )
+                )
+            }
+
+            BleConstantData.REPLY_CMD_96 -> {
+                val result = AnalyzeDataFactory.analyze0x96For0x16(buffer.array())
+                LogUtils.d("pack: ${GsonUtils.toJson(result)}")
+                val stringBuilder = StringBuilder().apply {
+                    result.data?.let { data ->
+                        if (data.isNotEmpty()) {
+                            appendLine(
+                                "心率数据日期->${
+                                    TimeUtils.millis2String(
+                                        data.last().timeStamp.toLong(),
+                                        TimeUtils.getSafeDateFormat("yyyy-MM-dd")
+                                    )
+                                }"
+                            )
+
+                            data.forEach { item ->
+                                appendLine(GsonUtils.toJson(item))
+                            }
+                        }
+                    } ?: append("无心率血压血氧信息")
+                }
+                noticeRefreshUI(
+                    DebugBaseItem.PackItem(
+                        stringBuilder.toString(),
+                        ConvertUtils.bytes2HexString(bytes)
+                    )
+                )
+            }
+
+
+            BleConstantData.REPLY_CMD_D2 -> {
+                val state = buffer.get().byte2Int()
+                noticeRefreshUI(
+                    DebugBaseItem.PackItem(
+                        "App进入拍照: ${desSwitch(state)}",
+                        ConvertUtils.bytes2HexString(bytes)
+                    )
+                )
+            }
+
+            BleConstantData.REPLY_CMD_B3 -> {
+                val state = buffer.get().byte2Int()
+                //实时数据
+                val stringBuffer = StringBuilder().apply {
+                    appendLine("实时数据->")
+                    if (state == 0x01) {
+                        appendLine("总步数: ${buffer.int.toUInt()}")
+                        appendLine("卡路里：${buffer.short.toUShort()}")
+                        appendLine("总里程(米)：${buffer.int.toUInt()}")
+                        appendLine("活动时长(秒)：${buffer.int.toUInt()}")
+                    } else {
+                        append("无效")
+                    }
+                }
+
+
+
+                noticeRefreshUI(
+                    DebugBaseItem.PackItem(
+                        stringBuffer.toString(),
+                        ConvertUtils.bytes2HexString(bytes)
+                    )
+                )
+            }
+
+            BleConstantData.REPLY_CMD_E0 -> {
+                val result = AnalyzeDataFactory.analyze0xE0For0x60(buffer.array())
+                //实时数据
+                val stringBuffer = StringBuilder().apply {
+                    appendLine("实时测量血压心率血氧 开关->")
+                    result.data?.let {
+                        append(GsonUtils.toJson(it))
+                    }
+                }
+
+                noticeRefreshUI(
+                    DebugBaseItem.PackItem(
+                        stringBuffer.toString(),
+                        ConvertUtils.bytes2HexString(bytes)
+                    )
+                )
+            }
+            BleConstantData.REPLY_CMD_E1 -> {
+                val result = AnalyzeDataFactory.analyze0xE1(buffer.array())
+                //实时数据
+                val stringBuffer = StringBuilder().apply {
+                    appendLine("实时测量血压心率血氧->")
+                    result.data?.let {
+                        append(GsonUtils.toJson(it))
+                    }
+                }
+
+                noticeRefreshUI(
+                    DebugBaseItem.PackItem(
+                        stringBuffer.toString(),
+                        ConvertUtils.bytes2HexString(bytes)
+                    )
+                )
+            }
+
+            BleConstantData.REPLY_CMD_F1 -> {
+                //实时数据
+                val stringBuffer = StringBuilder().apply {
+                    appendLine("收到恢复出厂设置->")
+                }
+
+                noticeRefreshUI(
+                    DebugBaseItem.PackItem(
+                        stringBuffer.toString(),
+                        ConvertUtils.bytes2HexString(bytes)
+                    )
+                )
+            }
+
+            BleConstantData.REPLY_CMD_72 -> {
+                //实时数据
+                val stringBuffer = StringBuilder().apply {
+                    appendLine("手表低电量->")
+                }
+
+                noticeRefreshUI(
+                    DebugBaseItem.PackItem(
+                        stringBuffer.toString(),
+                        ConvertUtils.bytes2HexString(bytes)
+                    )
+                )
+            }
+
+            BleConstantData.REPLY_CMD_EE -> {
+                //实时数据
+                val stringBuffer = StringBuilder().apply {
+                    appendLine("收到错误信息返回->")
+                }
+
+                noticeRefreshUI(
+                    DebugBaseItem.PackItem(
+                        stringBuffer.toString(),
+                        ConvertUtils.bytes2HexString(bytes)
+                    )
+                )
+            }
+            BleConstantData.REPLY_CMD_97 -> {
+
+                val result = AnalyzeDataFactory.analyze0x97For0x17(bytes)
+
+                //实时数据
+                val stringBuffer = StringBuilder().apply {
+                    appendLine("收到当前血压血氧血糖->")
+                    result.data?.let { data ->
+                        append(GsonUtils.toJson(data))
+                    }
+                }
+
+                noticeRefreshUI(
+                    DebugBaseItem.PackItem(
+                        stringBuffer.toString(),
+                        ConvertUtils.bytes2HexString(bytes)
+                    )
+                )
+            }
+
+
+
+
+            else -> {
+                noticeRefreshUI(
+                    DebugBaseItem.PackItem(
+                        "未知的命令码：0x${cmd.toString(16)}",
+                        ConvertUtils.bytes2HexString(bytes)
+                    )
+                )
+            }
+        }
+    }
+
+    private fun noticeRefreshUI(item: DebugBaseItem.PackItem) {
+        val list = _readWriteListFlow.value.toMutableList()
+        list.add(0, item)
+        _readWriteListFlow.value = list
+    }
+
     private fun noticeRefreshUI(bytes: List<ByteArray>, type: DebugDataType) {
         val list = _readWriteListFlow.value.toMutableList()
         list.addAll(
@@ -209,7 +553,7 @@ class BleConnectViewModel : ViewModel() {
             bytes.mapIndexed { index, values ->
                 val date = TimeUtils.getNowDate()
                 val hexCmd = values[0].byte2Int().toString(16)
-                DebugItem(
+                DebugBaseItem.DebugItem(
                     type,
                     TimeUtils.date2String(date, TimeUtils.getSafeDateFormat("MM-dd HH:mm:ss SSS")),
                     values,
@@ -222,5 +566,20 @@ class BleConnectViewModel : ViewModel() {
         _readWriteListFlow.value = list
     }
 
+    private fun desString(state: Int): String {
+        return when (state) {
+            BleConstantData.SUCCESS_BLE_CODE -> "->成功"
+            BleConstantData.FAIL_BLE_CODE -> "->失败"
+            else -> "->未知"
+        }
+    }
+
+    private fun desSwitch(state: Int): String {
+        return when (state) {
+            0x01 -> "->开"
+            0x00 -> "->关"
+            else -> "->未知"
+        }
+    }
 
 }

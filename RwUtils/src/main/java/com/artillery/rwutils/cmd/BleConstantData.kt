@@ -136,7 +136,10 @@ object BleConstantData {
     const val CMD_0x3c: Byte = 0x3c
 
 
-    const val HEAD_0X03: Byte = 0x03
+    /**
+     * 获取手环功能
+     */
+    const val CMD_0X03: Byte = 0x03
     const val RESERVED_DEF_0X00: Byte = 0x00
 
 
@@ -186,6 +189,59 @@ object BleConstantData {
      * 软件版本信息获取
      */
     const val REPLY_CMD_9F: Int = 0x9f
+
+
+    /**
+     * 设置日期时间回复
+     */
+    const val REPLY_CMD_81: Int = 0x81
+
+    /**
+     * 根据日期获取的运动数据 index == 4 如果是0xff表示是最后一包
+     */
+    const val REPLY_CMD_93: Int = 0x93
+
+    /**
+     * 睡眠数据 index 1-2 Short  == 0xffff 表示是最后一包
+     */
+    const val REPLY_CMD_95: Int = 0x95
+
+    /**
+     * 血压心率血氧 index 1-2 Short  == 0xffff 表示是最后一包
+     */
+    const val REPLY_CMD_96: Int = 0x96
+
+    /**
+     * 血压心率血氧 启动或者停止
+     */
+    const val REPLY_CMD_E0: Int = 0xE0
+
+    /**
+     * 实时上报心率测量结果
+     */
+    const val REPLY_CMD_E1: Int = 0xE1
+
+    /**
+     * 手表接收到恢复出厂设置回复的
+     */
+    const val REPLY_CMD_F1: Int = 0xF1
+
+    /**
+     * 低电量通知
+     */
+    const val REPLY_CMD_72: Int = 0x72
+
+    /**
+     * 收到错误信息
+     */
+    const val REPLY_CMD_EE: Int = 0xEE
+
+    /**
+     * 获取当前心率血压血氧
+     */
+    const val REPLY_CMD_97: Int = 0x97
+
+
 
 
 

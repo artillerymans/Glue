@@ -34,7 +34,7 @@ fun BleConnectCompose(nav: NavController, device: BluetoothDevice? = null, viewM
 
         Column(modifier = Modifier.fillMaxSize().padding(10.dp)) {
             Text(
-                text = if (state?.isConnected == false) "已连接" else "未连接",
+                text = if (state?.isConnected == true) "已连接" else "未连接",
                 style = TextStyle(fontSize = 16.sp)
             )
         }

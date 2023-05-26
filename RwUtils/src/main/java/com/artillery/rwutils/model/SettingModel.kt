@@ -13,8 +13,24 @@ import com.artillery.rwutils.type.SwitchType
 data class AlarmClock(
     var enable: SwitchType,
     var startTime: Short,  //高位在前
-    var choiceDays: MutableList<Byte>,
+    var choiceDays: MutableList<AlarmChoiceDay>,
 )
+
+
+/**
+ * 闹钟选择的星期
+ */
+
+@Keep
+sealed class AlarmChoiceDay(val byte: Byte){
+    class Monday(byte: Byte = 0x01) : AlarmChoiceDay(byte)
+    class Tuesday(byte: Byte = 0x02) : AlarmChoiceDay(byte)
+    class Wednesday(byte: Byte = 0x04) : AlarmChoiceDay(byte)
+    class Thursday(byte: Byte = 0x08) : AlarmChoiceDay(byte)
+    class Friday(byte: Byte = 0x10) : AlarmChoiceDay(byte)
+    class Saturday(byte: Byte = 0x20) : AlarmChoiceDay(byte)
+    class Sunday(byte: Byte = 0x40) : AlarmChoiceDay(byte)
+}
 
 
 /**
@@ -25,7 +41,7 @@ data class AlarmClock(
 @Keep
 data class RemindItem(
     var enable: SwitchType,
-    var interval: Byte,  //提醒间隔
+    var interval: Byte,  //提醒间隔 单位分钟 勿扰模式没有间隔需要给0
     var startHour: Byte,   //开始结束时分
     var startMinute: Byte,
     var endHour: Byte,

@@ -19,6 +19,7 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import org.junit.Test
 
 import java.nio.ByteBuffer
+import java.time.LocalDateTime
 import kotlin.experimental.and
 
 /**
@@ -27,6 +28,49 @@ import kotlin.experimental.and
  * See [testing documentation](http://d.android.com/tools/testing).
  */
 class ExampleUnitTest {
+
+    @Test
+    fun ansy0x13(){
+
+        var localDateTime = LocalDateTime.now()
+        localDateTime = localDateTime.minusDays(1L)
+
+        println("month = ${localDateTime.monthValue}")
+        println("day = ${localDateTime.dayOfMonth}")
+
+
+        val hexString = "1317051A"
+        val bytes = ConvertUtils.hexString2Bytes(hexString)
+        val buffer = bytes.toBuffer()
+        println("cmd=${buffer.get().byte2Int().toString(16)}")
+        println("year=${buffer.get().byte2Int()}")
+        println("month=${buffer.get().byte2Int()}")
+        println("day=${buffer.get().byte2Int()}")
+
+    }
+
+    @Test
+    fun ansy0x02_04(){
+        //val hexString = "0204003C0900121E011700081E013C0900121E00"
+        //val hexString = "0204003C0900121E001700081E003C0900121E00"
+        val hexString = "0204003C0900121E001700081E003C0900121E"
+        val bytes = ConvertUtils.hexString2Bytes(hexString)
+        val buffer = bytes.toBuffer()
+        println("命令码= ${buffer.get().byte2Int().toString(16)}")
+        println("序号= ${buffer.get().byte2Int()}")
+        println("久坐开关= ${buffer.get().byte2Int()}")
+        println("久坐间隔= ${buffer.get().byte2Int()}")
+        println("久坐开始= ${buffer.get().byte2Int()}:${buffer.get().byte2Int()}")
+        println("久坐结束= ${buffer.get().byte2Int()}:${buffer.get().byte2Int()}")
+        println("勿扰开关= ${buffer.get().byte2Int()}")
+        println("勿扰开始= ${buffer.get().byte2Int()}:${buffer.get().byte2Int()}")
+        println("勿扰结束= ${buffer.get().byte2Int()}:${buffer.get().byte2Int()}")
+        println("喝水开关= ${buffer.get().byte2Int()}")
+        println("喝水间隔= ${buffer.get().byte2Int()}")
+        println("喝水开始= ${buffer.get().byte2Int()}:${buffer.get().byte2Int()}")
+        println("喝水结束= ${buffer.get().byte2Int()}:${buffer.get().byte2Int()}")
+    }
+
 
     @Test
     fun ansy0xb3(){
