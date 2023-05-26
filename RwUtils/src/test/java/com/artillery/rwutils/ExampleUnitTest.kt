@@ -29,6 +29,16 @@ import kotlin.experimental.and
  */
 class ExampleUnitTest {
 
+
+    @Test
+    fun analysis0x97(){
+        val hexString = "9742705261"
+        val bytes = ConvertUtils.hexString2Bytes(hexString)
+        println("size = ${bytes.size}")
+        val result = AnalyzeDataFactory.analyze0x97For0x17(ConvertUtils.hexString2Bytes(hexString))
+        println(result.data)
+    }
+
     @Test
     fun ansy0x13(){
 

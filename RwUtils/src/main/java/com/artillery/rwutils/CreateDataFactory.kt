@@ -14,7 +14,7 @@ import com.artillery.rwutils.model.ContactsItem
 import com.artillery.rwutils.model.DistanceUnit
 import com.artillery.rwutils.model.NoticeType
 import com.artillery.rwutils.model.ProcessDataRequest
-import com.artillery.rwutils.model.RemindItem
+import com.artillery.rwutils.model.SDD
 import com.artillery.rwutils.model.TemperatureUnit
 import com.artillery.rwutils.type.DayFormatType
 import com.artillery.rwutils.type.Gender
@@ -194,8 +194,27 @@ object CreateDataFactory {
                 list.forEach { item ->
                     put(item.enable.toByte())
                     putShort(item.startTime)
-                    put(item.choiceDays.fold(0.toByte()) { acc, day -> acc or day.byte })
+                    put(item.choiceDays.fold(0.toByte()) { acc, day -> acc or day.byte.toByte() })
                 }
+            }
+        }
+    }
+
+    /**
+     * 设置表盘 以及单位
+     */
+    fun createSettingsClockDialUnit(
+        clockDialOrder: Int,
+        temperatureUnit: TemperatureUnit,
+        distanceUnit: DistanceUnit
+    ): ByteArray {
+        return ByteArray(5).apply {
+            ByteBuffer.wrap(this).apply {
+                put(BleConstantData.CMD_0x02)
+                put(0x05)
+                put(clockDialOrder.toByte())
+                put(temperatureUnit.value.toByte())
+                put(distanceUnit.value.toByte())
             }
         }
     }
@@ -205,22 +224,48 @@ object CreateDataFactory {
      * 按照久坐、勿扰、喝水等顺序依次设置
      */
     fun createSettingRemind(
-        list: List<RemindItem>,
+        list: List<SDD>,
     ): ByteArray {
         return ByteArray(19).apply {
             ByteBuffer.wrap(this).apply {
                 put(BleConstantData.CMD_0x02)
                 put(0x04)
                 list.forEach { item ->
-                    put(item.enable.toByte())
-                    //勿扰模式没有间隔时间
-                    if (item.interval > 0.toByte()){
-                        put(item.interval)
+                    when(item){
+                        is SDD.Sedentary -> {
+                            put(item.enable.toByte())
+                            //间隔时间
+                            if (item.interval > 0.toByte()){
+                                put(item.interval)
+                            }
+                            put(item.startHour)
+                            put(item.startMinute)
+                            put(item.endHour)
+                            put(item.endMinute)
+                        }
+                        is SDD.DrinkingWater -> {
+                            put(item.enable.toByte())
+                            //间隔时间
+                            if (item.interval > 0.toByte()){
+                                put(item.interval)
+                            }
+                            put(item.startHour)
+                            put(item.startMinute)
+                            put(item.endHour)
+                            put(item.endMinute)
+                        }
+                        is SDD.DonTDisturb -> {
+                            put(item.enable.toByte())
+                            put(item.startHour)
+                            put(item.startMinute)
+                            put(item.endHour)
+                            put(item.endMinute)
+                        }
+                        else -> {
+
+                        }
                     }
-                    put(item.startHour)
-                    put(item.startMinute)
-                    put(item.endHour)
-                    put(item.endMinute)
+
                 }
             }
         }

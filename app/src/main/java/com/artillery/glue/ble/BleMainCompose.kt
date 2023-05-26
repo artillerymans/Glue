@@ -14,7 +14,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -38,9 +37,14 @@ import com.artillery.glue.ui.NavConstant
 import com.artillery.rwutils.CreateDataFactory
 import com.artillery.rwutils.model.AlarmChoiceDay
 import com.artillery.rwutils.model.AlarmClock
+import com.artillery.rwutils.model.BWeather
+import com.artillery.rwutils.model.DistanceUnit
 import com.artillery.rwutils.model.NoticeType
 import com.artillery.rwutils.model.ProcessDataRequest
-import com.artillery.rwutils.model.RemindItem
+import com.artillery.rwutils.model.SDD
+import com.artillery.rwutils.model.TemperatureType
+import com.artillery.rwutils.model.TemperatureUnit
+import com.artillery.rwutils.model.WeatherType
 import com.artillery.rwutils.type.Gender
 import com.artillery.rwutils.type.SwitchType
 import com.blankj.utilcode.util.LogUtils
@@ -49,8 +53,6 @@ import com.blankj.utilcode.util.ToastUtils
 import kotlinx.coroutines.launch
 import java.nio.ByteBuffer
 import java.time.LocalDateTime
-import java.time.ZoneId
-import java.util.Calendar
 
 /**
  * @author : zhiweizhu
@@ -240,7 +242,7 @@ fun BleMainCompose(navController: NavController, viewModel: BleConnectViewModel)
                 writeBytes(
                     CreateDataFactory.createSettingRemind(
                         mutableListOf(
-                            RemindItem(
+                            SDD.Sedentary(
                                 SwitchType.ON,
                                 60.toByte(),
                                 9.toByte(),
@@ -248,15 +250,14 @@ fun BleMainCompose(navController: NavController, viewModel: BleConnectViewModel)
                                 18.toByte(),
                                 30.toByte()
                             ),
-                            RemindItem(
+                            SDD.DonTDisturb(
                                 SwitchType.ON,
-                                0.toByte(),  //勿扰模式没有间隔时间直接给0
                                 23.toByte(),
                                 0.toByte(),
                                 8.toByte(),
                                 30.toByte()
                             ),
-                            RemindItem(
+                            SDD.DrinkingWater(
                                 SwitchType.ON,
                                 60.toByte(),
                                 9.toByte(),
@@ -269,7 +270,9 @@ fun BleMainCompose(navController: NavController, viewModel: BleConnectViewModel)
                 )
             },
             onSecondClick = {
-                ToastUtils.showShort("读取喝水提示")
+                writeBytes(
+                    CreateDataFactory.createReadNoticeSettings()
+                )
             }
         )
 
@@ -311,7 +314,11 @@ fun BleMainCompose(navController: NavController, viewModel: BleConnectViewModel)
                 val localDateTime = LocalDateTime.now().minusDays(1L)
                 writeBytes(
                     CreateDataFactory.createStepsByTime(
-                        ProcessDataRequest.Steps(localDateTime.year, localDateTime.monthValue, localDateTime.dayOfMonth)
+                        ProcessDataRequest.Steps(
+                            localDateTime.year,
+                            localDateTime.monthValue,
+                            localDateTime.dayOfMonth
+                        )
                     )
                 )
             },
@@ -319,7 +326,11 @@ fun BleMainCompose(navController: NavController, viewModel: BleConnectViewModel)
                 val localDateTime = LocalDateTime.now().minusDays(1L)
                 writeBytes(
                     CreateDataFactory.createSleepsByTime(
-                        ProcessDataRequest.Sleeps(localDateTime.year, localDateTime.monthValue, localDateTime.dayOfMonth)
+                        ProcessDataRequest.Sleeps(
+                            localDateTime.year,
+                            localDateTime.monthValue,
+                            localDateTime.dayOfMonth
+                        )
                     )
                 )
             }
@@ -327,17 +338,24 @@ fun BleMainCompose(navController: NavController, viewModel: BleConnectViewModel)
 
         UnitRowLayout(
             "今日心率血压血氧",
-            "----",
+            "读取通知开关",
             onFirstClick = {
                 val localDateTime = LocalDateTime.now()
                 writeBytes(
                     CreateDataFactory.createHeartRateByTime(
-                        ProcessDataRequest.HeartRates(localDateTime.year, localDateTime.monthValue, localDateTime.dayOfMonth)
+                        ProcessDataRequest.HeartRates(
+                            localDateTime.year,
+                            localDateTime.monthValue,
+                            localDateTime.dayOfMonth
+                        )
                     )
                 )
             },
             onSecondClick = {
-
+                //读取通知开关
+                writeBytes(
+                    CreateDataFactory.createReadNoticeEnables()
+                )
             }
         )
 
@@ -453,6 +471,61 @@ fun BleMainCompose(navController: NavController, viewModel: BleConnectViewModel)
             }
         )
 
+        UnitRowLayout(
+            "天气",
+            "同步紫外线",
+            onFirstClick = {
+                val list = mutableListOf<BWeather>().apply {
+                    //添加今天的天气
+                    add(
+                        BWeather.TodayWeather(
+                            WeatherType.雷阵雨(),
+                            TemperatureType.AboveZero(),  //零上
+                            39,
+                            TemperatureType.AboveZero(),
+                            12,
+                            TemperatureType.AboveZero(),
+                            42
+                        )
+                    )
+                    add(
+                        BWeather.OtherDayWeather(
+                            WeatherType.大雨(),
+                            TemperatureType.AboveZero(),
+                            19,
+                            TemperatureType.AboveZero(),
+                            41
+                        )
+                    )
+                }
+                writeBytes(CreateDataFactory.createWeather(list))
+            },
+            onSecondClick = {
+                //同步紫外线
+                writeBytes(CreateDataFactory.createUltravioletRaysAndPressure(
+                    89.toByte(),
+                    98.toShort(),
+                    20.toByte()
+                ))
+            }
+        )
+
+        UnitRowLayout(
+            "写入表盘温度单位",
+            "读取表盘温度单位",
+            onFirstClick = {
+                writeBytes(CreateDataFactory.createSettingsClockDialUnit(
+                    3,
+                    TemperatureUnit.HuaCelsius(),
+                    DistanceUnit.EnglishSystem()
+                ))
+            },
+            onSecondClick = {
+                //读取表盘温度单位
+                writeBytes(CreateDataFactory.createReadClockDialUnit())
+            }
+        )
+
 
         /*调试直观查看数据*/
         LazyColumn(
@@ -470,7 +543,7 @@ fun BleMainCompose(navController: NavController, viewModel: BleConnectViewModel)
                         .height(IntrinsicSize.Min)
                         .padding(4.dp)
                 ) {
-                    if (it is DebugBaseItem.DebugItem){
+                    if (it is DebugBaseItem.DebugItem) {
                         Text(
                             text = "序号:${it.order}->${
                                 when (it.type) {
@@ -490,7 +563,7 @@ fun BleMainCompose(navController: NavController, viewModel: BleConnectViewModel)
                             text = "Hex->${it.hexString}",
                             style = TextStyle(fontSize = 15.sp, fontWeight = FontWeight.Bold)
                         )
-                    }else if(it is DebugBaseItem.PackItem){
+                    } else if (it is DebugBaseItem.PackItem) {
 
                         Text(
                             text = "Hex->${it.hexString}",

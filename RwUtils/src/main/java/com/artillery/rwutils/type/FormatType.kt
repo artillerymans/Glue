@@ -146,14 +146,16 @@ enum class Gender{
  */
 enum class SwitchType{
     ON,
-    OFF;
+    OFF,
+    UNKNOWN;
 
 
     companion object{
         fun of(value: Int): SwitchType {
             return when(value){
                 0x01 -> ON
-                else -> OFF
+                0x00 -> OFF
+                else -> UNKNOWN
             }
         }
     }

@@ -13,6 +13,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import no.nordicsemi.android.ble.BleManager
@@ -74,29 +75,48 @@ class BleDeviceManager(context: Context = Utils.getApp()) : BleManager(context) 
         mReadNotificationCharacteristicChannel = channel
     }
 
-    fun post(bytes: List<ByteArray>, writeType: Int = BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE){
+    fun post(bytes: List<ByteArray>, writeType: Int = BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE, delay: Long = 0L){
         mDefaultScope.launch {
+            if (delay > 0){
+                delay(delay)
+            }
             send(bytes, writeType)
         }
     }
 
     private suspend fun send(bytes: List<ByteArray>,
                              @WriteType writeType: Int = BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE){
+        var indexRetry = 0
         bytes.forEachIndexed{ index, data ->
-            val tempData = suspendCancellableCoroutine { continuation ->
-                writeCharacteristic(
-                    mWriteCharacteristic,
-                    data,
-                    writeType
-                ).done {
-                    continuation.resumeWith(Result.success(data))
-                }.fail { device, status ->
-                    continuation.resumeWith(Result.failure(Exception("写入数据失败，状态码 ->$status")))
-                }.enqueue()
+            try {
+                val tempData = suspendCancellableCoroutine { continuation ->
+                    writeCharacteristic(
+                        mWriteCharacteristic,
+                        data,
+                        writeType
+                    ).done {
+                        continuation.resumeWith(Result.success(data))
+                    }.fail { device, status ->
+                        indexRetry = index
+                        continuation.resumeWith(Result.failure(Exception("写入数据失败，状态码 ->$status")))
+                    }.enqueue()
+                }
+                LogUtils.d("写入数据$index:->${ConvertUtils.bytes2HexString(tempData)}")
+            }catch (e: Exception){
+                e.printStackTrace()
+                return@forEachIndexed
             }
-            LogUtils.d("写入数据$index:->${ConvertUtils.bytes2HexString(tempData)}")
+        }
+
+        if (indexRetry != 0){
+            val tempBytes = bytes.subList(indexRetry, bytes.size)
+            LogUtils.d("send: 开始重试发送数据$indexRetry")
+            post(tempBytes, writeType, 3000L)
         }
     }
+
+
+
 
 
     override fun initialize() {

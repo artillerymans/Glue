@@ -5,12 +5,19 @@ import com.artillery.rwutils.cmd.BleConstantData
 import com.artillery.rwutils.exts.byte2Int
 import com.artillery.rwutils.exts.toBuffer
 import com.artillery.rwutils.exts.zeroByte
+import com.artillery.rwutils.model.Aggregate
+import com.artillery.rwutils.model.AlarmChoiceDay
+import com.artillery.rwutils.model.AlarmClock
 import com.artillery.rwutils.model.BleResult
 import com.artillery.rwutils.model.CurrentDayStepsData
+import com.artillery.rwutils.model.DistanceUnit
 import com.artillery.rwutils.model.MeasureType
+import com.artillery.rwutils.model.NoticeType
 import com.artillery.rwutils.model.RealTimeData
+import com.artillery.rwutils.model.SDD
 import com.artillery.rwutils.model.SleepInfoData
 import com.artillery.rwutils.model.SoftVersionModel
+import com.artillery.rwutils.model.TemperatureUnit
 import com.artillery.rwutils.model.ThreeElements
 import com.artillery.rwutils.model.ThreeElementsCurrent
 import com.artillery.rwutils.model.ThreeElementsRealTime
@@ -417,9 +424,9 @@ object AnalyzeDataFactory {
             val maxBloodPressure = buffer.get().byte2Int()
             val minBloodPressure = buffer.get().byte2Int()
             val bloodOxygen = buffer.get().byte2Int()
-            val bloodSugar = buffer.get().byte2Int()
+           /* val bloodSugar = buffer.get().byte2Int()
             LogUtils.d("analyze0x97For0x17: $bloodSugar")
-            val bloodSugarStr = bloodSugar.toString().toMutableList().joinToString(".")
+            val bloodSugarStr = bloodSugar.toString().toMutableList().joinToString(".")*/
 
             BleResult(
                 cmd.byte2Int(),
@@ -429,9 +436,228 @@ object AnalyzeDataFactory {
                     maxBloodPressure,
                     minBloodPressure,
                     bloodOxygen,
-                    bloodSugarStr
+                    "0"
                 )
             )
+        } else {
+            BleResult()
+        }
+    }
+
+    /**
+     * 天气同步的回复数据解析
+     */
+    fun analyze0x85For05(bytes: ByteArray): BleResult<Int>{
+        val buffer = bytes.toBuffer()
+        val cmd = buffer.get()
+        return if (cmd.byte2Int() == BleConstantData.REPLY_CMD_85) {
+            val state = buffer.get().byte2Int()
+            BleResult(
+                cmd.byte2Int(),
+                state,
+                state
+            )
+        } else {
+            BleResult()
+        }
+    }
+
+    fun analyze0x84For04(bytes: ByteArray): BleResult<Int>{
+        val buffer = bytes.toBuffer()
+        val cmd = buffer.get()
+        return if (cmd.byte2Int() == BleConstantData.REPLY_CMD_84) {
+            val state = buffer.get().byte2Int()
+            BleResult(
+                cmd.byte2Int(),
+                state,
+                state
+            )
+        } else {
+            BleResult()
+        }
+    }
+
+
+    fun analyze0xE2For0x62(bytes: ByteArray): BleResult<Aggregate>{
+        val buffer = bytes.toBuffer()
+        val cmd = buffer.get()
+        return if (cmd.byte2Int() == BleConstantData.REPLY_CMD_E2) {
+            val order = buffer.get().byte2Int()
+            if (order == 0x02){
+                val skypeValue = buffer.get().byte2Int()
+                val lineValue = buffer.get().byte2Int()
+                val inCallValue = buffer.get().byte2Int()
+                val smsValue = buffer.get().byte2Int()
+                val wxValue = buffer.get().byte2Int()
+                val qqValue = buffer.get().byte2Int()
+                val kakaoTalkValue = buffer.get().byte2Int()
+                val facebookValue = buffer.get().byte2Int()
+                val twitterValue = buffer.get().byte2Int()
+                val whatsAppValue = buffer.get().byte2Int()
+                val linkedinValue = buffer.get().byte2Int()
+                val viberValue = buffer.get().byte2Int()
+                val instagramValue = buffer.get().byte2Int()
+                val messengerValue = buffer.get().byte2Int()
+                val otherValue = buffer.get().byte2Int()
+
+                val skype = NoticeType.Skype(SwitchType.of(skypeValue))
+                val line = NoticeType.Line(SwitchType.of(lineValue))
+                val inCall = NoticeType.InCall(SwitchType.of(inCallValue))
+                val sms = NoticeType.Sms(SwitchType.of(smsValue))
+                val wx = NoticeType.WeiXin(SwitchType.of(wxValue))
+                val qq = NoticeType.QQ(SwitchType.of(qqValue))
+                val kakaoTalk = NoticeType.KakaoTalk(SwitchType.of(kakaoTalkValue))
+                val facebook = NoticeType.Facebook(SwitchType.of(facebookValue))
+                val twitter = NoticeType.Twitter(SwitchType.of(twitterValue))
+                val whatsApp = NoticeType.WhatsApp(SwitchType.of(whatsAppValue))
+                val linkedin = NoticeType.Linkedin(SwitchType.of(linkedinValue))
+                val viber = NoticeType.Viber(SwitchType.of(viberValue))
+                val instagram = NoticeType.Instagram(SwitchType.of(instagramValue))
+                val messenger = NoticeType.Messenger(SwitchType.of(messengerValue))
+                val other = NoticeType.Other(SwitchType.of(otherValue))
+
+                val lightUpTheScreenValue = buffer.get().byte2Int()
+                //抬腕亮屏
+                val lightUpTheScreen = SwitchType.of(lightUpTheScreenValue)
+                val whileHeartRatesValue = buffer.get().byte2Int()
+                //循环心率检测
+                val whileHeartRates = SwitchType.of(whileHeartRatesValue)
+                //循环心率检测间隔 单位分钟
+                val whileHeartRatesInterval = buffer.get().byte2Int()
+
+                BleResult(
+                    cmd.byte2Int(),
+                    -1,
+                    Aggregate.NoticeAggregate(
+                        skype, line, inCall,
+                        sms, wx, qq, kakaoTalk,
+                        facebook, twitter, whatsApp,
+                        linkedin, viber, instagram,
+                        messenger, other, lightUpTheScreen,
+                        whileHeartRates, whileHeartRatesInterval
+                    )
+                )
+            }else if(order == 0x03){
+                //读取到的是闹钟信息
+                val list = mutableListOf<AlarmClock>()
+                while (buffer.limit() > 4 && buffer.position() < 14){
+                    val enable = SwitchType.of(buffer.get().byte2Int())
+                    val startTime = buffer.short
+                    val choiceDay = buffer.get().byte2Int()
+                    list.add(
+                        AlarmClock(
+                            enable,
+                            startTime,
+                            mutableListOf<AlarmChoiceDay>().apply {
+                                if (choiceDay and AlarmChoiceDay.Monday().byte > 0){
+                                    add(AlarmChoiceDay.Monday())
+                                }
+                                if (choiceDay and AlarmChoiceDay.Tuesday().byte > 0){
+                                    add(AlarmChoiceDay.Tuesday())
+                                }
+                                if (choiceDay and AlarmChoiceDay.Wednesday().byte > 0){
+                                    add(AlarmChoiceDay.Wednesday())
+                                }
+                                if (choiceDay and AlarmChoiceDay.Thursday().byte > 0){
+                                    add(AlarmChoiceDay.Thursday())
+                                }
+                                if (choiceDay and AlarmChoiceDay.Friday().byte > 0){
+                                    add(AlarmChoiceDay.Friday())
+                                }
+                                if (choiceDay and AlarmChoiceDay.Saturday().byte > 0){
+                                    add(AlarmChoiceDay.Saturday())
+                                }
+                                if (choiceDay and AlarmChoiceDay.Sunday().byte > 0){
+                                    add(AlarmChoiceDay.Sunday())
+                                }
+                            }
+                        )
+                    )
+                }
+
+
+                BleResult(
+                    cmd.byte2Int(),
+                    -1,
+                    Aggregate.AlarmAggregate(list)
+                )
+            }else if (order == 0x04){
+                //久坐 勿扰 喝水
+                val list = mutableListOf<SDD>()
+                var enable = SwitchType.of(buffer.get().byte2Int())
+                var interval = buffer.get()
+                var startHour = buffer.get()
+                var startMinute = buffer.get()
+                var endHour = buffer.get()
+                var endMinute = buffer.get()
+                list.add(
+                    SDD.Sedentary(
+                        enable,
+                        interval,
+                        startHour,
+                        startMinute,
+                        endHour, endMinute
+                    )
+                )
+
+                enable = SwitchType.of(buffer.get().byte2Int())
+                startHour = buffer.get()
+                startMinute = buffer.get()
+                endHour = buffer.get()
+                endMinute = buffer.get()
+                list.add(
+                    SDD.DonTDisturb(
+                        enable,
+                        startHour,
+                        startMinute,
+                        endHour,
+                        endMinute
+                    )
+                )
+
+                enable = SwitchType.of(buffer.get().byte2Int())
+                interval = buffer.get()
+                startHour = buffer.get()
+                startMinute = buffer.get()
+                endHour = buffer.get()
+                endMinute = buffer.get()
+                list.add(
+                    SDD.DrinkingWater(
+                        enable,
+                        interval,
+                        startHour,
+                        startMinute,
+                        endHour, endMinute
+                    )
+                )
+
+                BleResult(
+                    cmd.byte2Int(),
+                    -1,
+                    Aggregate.SddAggregate(
+                        list
+                    )
+                )
+            }else if (order == 0x05){
+                val clockDial = buffer.get().byte2Int()
+                val sum = buffer.get().byte2Int()
+                val temperValue = buffer.get().byte2Int()
+                val temperatureUnit = TemperatureUnit.of(temperValue)
+                val distanceValue = buffer.get().byte2Int()
+                val distanceUnit = DistanceUnit.of(distanceValue)
+                BleResult(
+                    cmd.byte2Int(),
+                    -1,
+                    Aggregate.ClockDialUnitAggregate(
+                        clockDial,
+                        sum,
+                        temperatureUnit,
+                        distanceUnit
+                    )
+                )
+            }else {
+                BleResult()
+            }
         } else {
             BleResult()
         }

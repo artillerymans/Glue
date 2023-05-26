@@ -156,6 +156,9 @@ object BleConstantData {
 
     const val REPLY_CMD_83: Int = 0x83
 
+    /**
+     * 设置各类信息回复
+     */
     const val REPLY_CMD_82: Int = 0x82
 
     /**
@@ -195,6 +198,16 @@ object BleConstantData {
      * 设置日期时间回复
      */
     const val REPLY_CMD_81: Int = 0x81
+
+    /**
+     * 通知紫外线数据回复
+     */
+    const val REPLY_CMD_84: Int = 0x84
+
+    /**
+     * 天气同步回复
+     */
+    const val REPLY_CMD_85: Int = 0x85
 
     /**
      * 根据日期获取的运动数据 index == 4 如果是0xff表示是最后一包
@@ -240,6 +253,11 @@ object BleConstantData {
      * 获取当前心率血压血氧
      */
     const val REPLY_CMD_97: Int = 0x97
+
+    /**
+     * 第1位 == 0x02 获取App通知开关、抬腕亮屏、心率循环检测开关 检测间隔 分钟单位
+     */
+    const val REPLY_CMD_E2: Int = 0xE2
 
 
 

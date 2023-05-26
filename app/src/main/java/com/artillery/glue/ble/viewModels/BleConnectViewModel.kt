@@ -22,11 +22,14 @@ import com.artillery.rwutils.AnalyzeDataFactory
 import com.artillery.rwutils.cmd.BleConstantData
 import com.artillery.rwutils.exts.byte2Int
 import com.artillery.rwutils.exts.toBuffer
+import com.artillery.rwutils.model.Aggregate
+import com.artillery.rwutils.model.SDD
 import com.blankj.utilcode.util.ConvertUtils
 import com.blankj.utilcode.util.GsonUtils
 import com.blankj.utilcode.util.LogUtils
 import com.blankj.utilcode.util.ThreadUtils
 import com.blankj.utilcode.util.TimeUtils
+import com.blankj.utilcode.util.ToastUtils
 import com.blankj.utilcode.util.Utils
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
@@ -81,9 +84,22 @@ class BleConnectViewModel : ViewModel() {
     private fun enableBleServices() {
         val bluetoothManager =
             Utils.getApp().getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
+
         if (bluetoothManager.adapter?.isEnabled == true) {
             LogUtils.d("Enabling BLE services")
-            bluetoothManager.adapter.bondedDevices.forEach { device -> addDevice(device) }
+            if (ActivityCompat.checkSelfPermission(
+                    Utils.getApp(),
+                    Manifest.permission.BLUETOOTH_CONNECT
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                ToastUtils.showShort("蓝牙权限Manifest.permission.BLUETOOTH_CONNECT 未授予")
+            }
+            try {
+                bluetoothManager.adapter.bondedDevices.forEach { device -> addDevice(device) }
+            }catch (e: SecurityException){
+                e.printStackTrace()
+            }
+
         } else {
             LogUtils.d("Cannot enable BLE services as either there is no Bluetooth adapter or it is disabled")
         }
@@ -198,7 +214,6 @@ class BleConnectViewModel : ViewModel() {
             addAction(BluetoothDevice.ACTION_BOND_STATE_CHANGED)
             addAction(BluetoothAdapter.ACTION_STATE_CHANGED)
         })
-
         enableBleServices()
     }
 
@@ -248,6 +263,9 @@ class BleConnectViewModel : ViewModel() {
 
                     0x04 -> {
                         "设置勿扰、久坐、喝水提醒等${desString(state)}"
+                    }
+                    0x05 -> {
+                        "设置表盘、单位等${desString(state)}"
                     }
 
                     else -> {
@@ -525,7 +543,97 @@ class BleConnectViewModel : ViewModel() {
                     )
                 )
             }
+            BleConstantData.REPLY_CMD_85 -> {
+                //天气同步
+                val result = AnalyzeDataFactory.analyze0x85For05(bytes)
 
+                //实时数据
+                val stringBuffer = StringBuilder().apply {
+                    appendLine("天气数据设置->${result.isSuccess()}")
+                }
+
+                noticeRefreshUI(
+                    DebugBaseItem.PackItem(
+                        stringBuffer.toString(),
+                        ConvertUtils.bytes2HexString(bytes)
+                    )
+                )
+
+            }
+
+            BleConstantData.REPLY_CMD_84 -> {
+                //天气同步
+                val result = AnalyzeDataFactory.analyze0x84For04(bytes)
+                //实时数据
+                val stringBuffer = StringBuilder().apply {
+                    appendLine("同步紫外线->${result.isSuccess()}")
+                }
+
+                noticeRefreshUI(
+                    DebugBaseItem.PackItem(
+                        stringBuffer.toString(),
+                        ConvertUtils.bytes2HexString(bytes)
+                    )
+                )
+
+            }
+
+            BleConstantData.REPLY_CMD_E2 -> {
+                //通知开关
+                val result = AnalyzeDataFactory.analyze0xE2For0x62(bytes)
+                //
+                val stringBuffer = StringBuilder().apply {
+                    appendLine("读取信息->")
+                    result.data?.let {
+                        when (it) {
+                            is Aggregate.NoticeAggregate -> {
+                                appendLine("类型->通知")
+                                append(
+                                    GsonUtils.toJson(it)
+                                )
+                            }
+                            is Aggregate.AlarmAggregate -> {
+                                appendLine("类型->闹钟")
+                                append(GsonUtils.toJson(it))
+                               /* val startTime = it.alarmClocks.last().toHourMinute()
+                                append("最后一个闹钟: ${startTime.first}:${startTime.second}")*/
+                            }
+                            is Aggregate.SddAggregate -> {
+                                appendLine("类型->提醒")
+                                it.sdds.forEach {sdd ->
+                                    when(sdd){
+                                        is SDD.Sedentary -> {
+                                            appendLine("久坐: ${GsonUtils.toJson(sdd)}")
+                                        }
+                                        is SDD.DrinkingWater -> {
+                                            appendLine("喝水: ${GsonUtils.toJson(sdd)}")
+                                        }
+                                        is SDD.DonTDisturb -> {
+                                            appendLine("勿扰: ${GsonUtils.toJson(sdd)}")
+                                        }
+                                    }
+                                }
+                            }
+                            is Aggregate.ClockDialUnitAggregate -> {
+                                appendLine("类型->温度、单位")
+                                appendLine("-->${GsonUtils.toJson(it)}")
+                            }
+                            else -> {
+
+                            }
+                        }
+                    } ?: append("无效信息")
+
+                }
+
+                noticeRefreshUI(
+                    DebugBaseItem.PackItem(
+                        stringBuffer.toString(),
+                        ConvertUtils.bytes2HexString(bytes)
+                    )
+                )
+
+            }
 
 
 
