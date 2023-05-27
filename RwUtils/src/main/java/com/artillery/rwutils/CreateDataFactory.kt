@@ -685,7 +685,7 @@ object CreateDataFactory {
                 ByteBuffer.wrap(this).apply {
                     put(BleConstantData.CMD_0x38)
                     putShort((0xffff).toShort())
-                    put(bytes.size.toBytes())  //校验和
+                    put(0)  //校验和
                 }
             })
         }
