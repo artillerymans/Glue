@@ -1,6 +1,7 @@
 package com.artillery.rwutils.exts
 
 import android.graphics.Bitmap
+import android.graphics.Matrix
 import com.artillery.rwutils.type.SwitchType
 import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
@@ -56,6 +57,24 @@ fun zeroByte(): Byte{
 
 fun Byte.byte2Int(): Int{
     return this.toInt() and 0xff
+}
+fun Short.short2Int(): Int{
+    return this.toInt() and 0xffff
+}
+
+fun Int.rgb888toRgb555(): Int {
+    return this shr 19 and 31 shl 11 or (this shr 10 and 63 shl 5) or (this shr 3 and 31)
+}
+
+fun Bitmap.scaleBitmap(newWidth: Float, newHeight: Float): Bitmap {
+    // 计算缩放比例
+    val scaleWidth = newWidth / width
+    val scaleHeight = newHeight / height
+    // 取得想要缩放的matrix参数
+    val matrix = Matrix()
+    matrix.postScale(scaleWidth, scaleHeight)
+    // 得到新的图片
+    return Bitmap.createBitmap(this, 0, 0, width, height, matrix, true)
 }
 
 

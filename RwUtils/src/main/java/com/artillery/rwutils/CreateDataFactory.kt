@@ -6,6 +6,7 @@ import com.artillery.rwutils.cmd.BleConstantData
 import com.artillery.rwutils.exts.fillZeros
 import com.artillery.rwutils.exts.toByte
 import com.artillery.rwutils.exts.toByteArrays
+import com.artillery.rwutils.exts.toBytes
 import com.artillery.rwutils.exts.toBytesLowerThree
 import com.artillery.rwutils.model.AlarmClock
 import com.artillery.rwutils.model.BWeather
@@ -645,6 +646,9 @@ object CreateDataFactory {
     }
 
 
+
+
+
     /**
      * 开始传输图片前开始发送准备动作
      */
@@ -657,25 +661,21 @@ object CreateDataFactory {
         }
     }
 
-
     /**
      * 创建高速传递图片
      */
-    fun createFastTransferBitMap(
-        bitmap: Bitmap
-    ): List<ByteArray> {
+    fun createFastTransferBitmap(bytes: ByteArray): List<ByteArray>{
         return mutableListOf<ByteArray>().also {
-            val tempBytes = bitmap.toByteArrays()
-            bitmap.recycle()
             var offset = 0
-            while (offset < tempBytes.size) {
-                val remaining = tempBytes.size - offset
+            while (offset < bytes.size) {
+                val remaining = bytes.size - offset
                 val length = if (remaining > 224) 224 else remaining
                 it.add(ByteArray(length + 3).apply {
                     ByteBuffer.wrap(this).apply {
                         put(BleConstantData.CMD_0x38)  //命令码
                         putShort(it.size.toShort()) //序列号从0开始
-                        put(tempBytes, offset, length)
+                        put(bytes, offset, length)
+                        //put(176.toByte())  //固定写死
                     }
                 })
                 offset += length
@@ -685,35 +685,42 @@ object CreateDataFactory {
                 ByteBuffer.wrap(this).apply {
                     put(BleConstantData.CMD_0x38)
                     putShort((0xffff).toShort())
-                    put(0)  //校验和
+                    put(bytes.size.toBytes())  //校验和
                 }
             })
         }
+    }
+
+    /**
+     * 创建高速传递图片
+     */
+    fun createFastTransferBitmap(
+        bitmap: Bitmap
+    ): List<ByteArray> {
+        val tempBytes = bitmap.toByteArrays()
+        bitmap.recycle()
+        return createFastTransferBitmap(tempBytes)
     }
 
 
     /**
      * 高速传输bin 准备
      */
-    fun createFastTransferBinPrepare(): ByteArray {
+    fun createFastTransferBinPrepare(size: Short): ByteArray {
         return ByteArray(6).apply {
             ByteBuffer.wrap(this).apply {
                 put(BleConstantData.CMD_0x39)
                 put(byteArrayOf(0xff.toByte(), 0xff.toByte(), 0xfe.toByte()))
-                putShort(0) //数据帧的有效数据大小
+                putShort(size) //数据帧的有效数据大小
             }
         }
-
     }
 
     /**
      * 传输bin文件
      */
-    fun createFastTransferBin(
-        path: String
-    ): List<ByteArray> {
+    fun createFastTransferBin(bytes: ByteArray): List<ByteArray>{
         val list = mutableListOf<ByteArray>()
-        val bytes = FileIOUtils.readFile2BytesByStream(path)
         var offset = 0
         while (offset < bytes.size) {
             val remaining = bytes.size - offset
@@ -736,6 +743,16 @@ object CreateDataFactory {
             }
         })
         return list
+    }
+
+    /**
+     * 传输bin文件
+     */
+    fun createFastTransferBin(
+        path: String
+    ): List<ByteArray> {
+        val bytes = FileIOUtils.readFile2BytesByStream(path)
+        return createFastTransferBin(bytes)
     }
 
 

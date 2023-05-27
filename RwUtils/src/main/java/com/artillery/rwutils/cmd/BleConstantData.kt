@@ -121,6 +121,11 @@ object BleConstantData {
     const val CMD_0x67: Byte = 0x67
 
     /**
+     * 传输自定背景图片
+     */
+    const val CMD_0x68: Byte = 0x68
+
+    /**
      * 创建推送消息
      */
     const val CMD_0x73: Byte = 0x73
@@ -258,6 +263,26 @@ object BleConstantData {
      * 第1位 == 0x02 获取App通知开关、抬腕亮屏、心率循环检测开关 检测间隔 分钟单位
      */
     const val REPLY_CMD_E2: Int = 0xE2
+
+    /**
+     * 同步到通讯录回复
+     */
+    const val REPLY_CMD_E6: Int = 0xE6
+
+    /**
+     * 自定义背景图 预备发送回复以及发送完成后的回复
+     * 预备回复  1,2字段如果 == 0xfffe 表示预备发送的回复
+     * 如果1，2字段是其他的则是发送完成的后的序列号
+     *
+     */
+    const val REPLY_CMD_B8: Int = 0xB8
+
+    /**
+     * 高速传输表盘Bin 的回复 包括 回复预备动作
+     * 1-3 如果 == 0xfffffe 表示回复的预备动作
+     * 4 表示 0 表示失败 1 表示成功
+     */
+    const val REPLY_CMD_B9: Int = 0xB9
 
 
 

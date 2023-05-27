@@ -242,6 +242,7 @@ sealed class DistanceUnit(val value: Int) {
 /**
  * 联系人
  */
+@Keep
 data class ContactsItem(
     var name: String,
     var mobile: String

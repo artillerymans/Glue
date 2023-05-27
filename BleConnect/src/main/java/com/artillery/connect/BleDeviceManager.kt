@@ -90,6 +90,7 @@ class BleDeviceManager(context: Context = Utils.getApp()) : BleManager(context) 
         bytes.forEachIndexed{ index, data ->
             try {
                 val tempData = suspendCancellableCoroutine { continuation ->
+                    indexRetry = index
                     writeCharacteristic(
                         mWriteCharacteristic,
                         data,
@@ -97,7 +98,6 @@ class BleDeviceManager(context: Context = Utils.getApp()) : BleManager(context) 
                     ).done {
                         continuation.resumeWith(Result.success(data))
                     }.fail { device, status ->
-                        indexRetry = index
                         continuation.resumeWith(Result.failure(Exception("写入数据失败，状态码 ->$status")))
                     }.enqueue()
                 }
@@ -105,7 +105,13 @@ class BleDeviceManager(context: Context = Utils.getApp()) : BleManager(context) 
             }catch (e: Exception){
                 e.printStackTrace()
                 return@forEachIndexed
+            }finally {
+                //数据多的话进行延时处理
+                if (bytes.size > 10){
+                    delay(100)
+                }
             }
+
         }
 
         if (indexRetry != 0){
