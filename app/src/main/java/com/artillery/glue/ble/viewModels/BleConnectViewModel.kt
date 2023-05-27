@@ -130,7 +130,6 @@ class BleConnectViewModel : ViewModel() {
                     it.stateAsFlow().collect { state ->
                         _connectStatusFlow.value = state
                     }
-                    it.stateAsFlow()
                 }
                 BleHelper.getInstance().saveBleDeviceManagerByKey(device.address, it)
             }

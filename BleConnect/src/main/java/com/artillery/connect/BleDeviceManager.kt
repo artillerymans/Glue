@@ -123,6 +123,9 @@ class BleDeviceManager(context: Context = Utils.getApp()) : BleManager(context) 
         super.initialize()
 
         requestMtu(238)
+            .done {
+
+            }
             .enqueue()
 
         setNotificationCallback(mReadNotificationCharacteristic).with { device, data ->
@@ -150,6 +153,7 @@ class BleDeviceManager(context: Context = Utils.getApp()) : BleManager(context) 
         readCharacteristic(mReadNotificationCharacteristic).with { device, data ->
             LogUtils.d("initialize: 读操作 --> ${ConvertUtils.bytes2HexString(data.value)}")
         }.enqueue()
+
 
         bluetoothDevice?.also {
             if (it.bondState == BluetoothDevice.BOND_NONE){
