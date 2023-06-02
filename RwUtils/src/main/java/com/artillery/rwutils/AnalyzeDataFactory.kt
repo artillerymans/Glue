@@ -732,36 +732,7 @@ object AnalyzeDataFactory {
     }
 
 
-    /**
-     * 同步联系人后的回复信息
-     */
-    fun analyze0xE6For0x66(bytes: ByteArray): BleResult<ReplyContactsItem> {
-        val buffer = bytes.toBuffer()
-        val cmd = buffer.get().byte2Int()
-        return if (cmd == BleConstantData.REPLY_CMD_E6) {
-            //序号
-            val order = buffer.short.short2Int()
-            val flag = buffer.get().byte2Int()
-            val state = buffer.get().byte2Int()
-            val number = buffer.short.short2Int()
 
-            BleResult(
-                cmd,
-                state,
-                ReplyContactsItem(
-                    order,
-                    flag,
-                    state,
-                    number
-                )
-            )
-        } else {
-            BleResult(
-                cmd,
-                BleConstantData.FAIL_BLE_CODE
-            )
-        }
-    }
 
     /**
      * 获取手环屏幕规格
@@ -799,28 +770,7 @@ object AnalyzeDataFactory {
         }
     }
 
-    /**
-     * 高速传输背景图片回复 包括预备动作的回复 以及发送完成的动作
-     */
-    fun analyze0xB8For0x38(bytes: ByteArray): BleResult<ReplyBgItem> {
-        val buffer = bytes.toBuffer()
-        val cmd = buffer.get()
-        return if (cmd.byte2Int() == BleConstantData.REPLY_CMD_B8) {
-            //序号
-            val order = buffer.short.short2Int()
-            val state = buffer.get().byte2Int()
-            BleResult(
-                cmd.byte2Int(),
-                state,
-                ReplyBgItem(
-                    order,
-                    state
-                )
-            )
-        } else {
-            BleResult()
-        }
-    }
+
 
     /**
      * 自定义背景图片回复
@@ -1178,27 +1128,5 @@ object AnalyzeDataFactory {
             BleResult()
         }
     }
-
-    fun analyze0xB9For0x39(bytes: ByteArray): BleResult<ReplyBinItem>{
-        val buffer = bytes.toBuffer()
-        val cmd = buffer.get()
-        return if (cmd.byte2Int() == BleConstantData.REPLY_CMD_B8) {
-            //序号
-            val order = buffer.int
-            val state = buffer.get().byte2Int()
-            BleResult(
-                cmd.byte2Int(),
-                state,
-                ReplyBinItem(
-                    order,
-                    state
-                )
-            )
-        } else {
-            BleResult()
-        }
-    }
-
-
 
 }

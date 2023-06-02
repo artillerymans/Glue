@@ -58,9 +58,7 @@ fun zeroByte(): Byte{
 fun Byte.byte2Int(): Int{
     return this.toInt() and 0xff
 }
-fun Short.short2Int(): Int{
-    return this.toInt() and 0xffff
-}
+
 
 fun Int.rgb888toRgb555(): Int {
     return this shr 19 and 31 shl 11 or (this shr 10 and 63 shl 5) or (this shr 3 and 31)
