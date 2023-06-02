@@ -653,6 +653,9 @@ object CreateDataFactory {
     }
 
 
+
+
+
     /**
      * 开始传输图片前开始发送准备动作
      */
@@ -668,7 +671,7 @@ object CreateDataFactory {
     /**
      * 创建高速传递图片
      */
-    fun createFastTransferBitmap(bytes: ByteArray): List<ByteArray> {
+    fun createFastTransferBitmap(bytes: ByteArray): List<ByteArray>{
         return mutableListOf<ByteArray>().also {
             var offset = 0
             while (offset < bytes.size) {

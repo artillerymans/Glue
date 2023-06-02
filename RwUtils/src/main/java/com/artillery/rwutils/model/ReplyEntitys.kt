@@ -211,6 +211,33 @@ sealed class SDD(var enable: SwitchType,
     ): SDD(enable, startHour, startMinute, endHour, endMinute)
 }
 
+/**
+ * 同步联系人结果数据返回
+ */
+@Keep
+data class ReplyContactsItem(
+    var order: Int,
+    var flag: Int,
+    var state: Int, //0 为失败 1 成功
+    var number: Int, //已经传输多少条
+)
+
+/**
+ * 背景图片发送回复
+ */
+@Keep
+data class ReplyBgItem(
+    var order: Int,  //如果等于0xfffe 表示是发送预备动作回复的
+    var state: Int //成功或者失败 0失败 1成功
+)
+
+@Keep
+data class ReplyBinItem(
+    var order: Int,  //如果等于0xfffffe 表示是发送预备动作回复的 否则就是序号
+    var state: Int //成功或者失败 0失败 1成功
+)
+
+
 
 /**
  * 同步联系人结果数据返回

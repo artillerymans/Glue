@@ -316,6 +316,40 @@ class BleConnectViewModel : ViewModel() {
                 )
             }
 
+            BleConstantData.REPLY_CMD_B8 -> {
+                val resutl = AnalyzeDataFactory.analyze0xB8For0x38(bytes)
+                val des = resutl.data?.let {
+                    if (it.order == 0xfffe){
+                        "预备发送背景: ${if(it.state == 0) "失败" else "成功"}"
+                    }else {
+                        "发送完成背景: ${if(it.state == 0) "失败" else "成功"}"
+                    }
+                }.orEmpty().ifEmpty { "发送背景图片解数据异常" }
+                noticeRefreshUI(
+                    DebugBaseItem.PackItem(
+                        des,
+                        ConvertUtils.bytes2HexString(bytes)
+                    )
+                )
+            }
+
+            BleConstantData.REPLY_CMD_B9 -> {
+                val resutl = AnalyzeDataFactory.analyze0xB9For0x39(bytes)
+                val des = resutl.data?.let {
+                    if (it.order == 0xfffffe){
+                        "预备发送Bin: ${if(it.state == 0) "失败" else "成功"}"
+                    }else {
+                        "发送完成Bin: ${if(it.state == 0) "失败" else "成功"}"
+                    }
+                }.orEmpty().ifEmpty { "发送Bin解数据异常" }
+                noticeRefreshUI(
+                    DebugBaseItem.PackItem(
+                        des,
+                        ConvertUtils.bytes2HexString(bytes)
+                    )
+                )
+            }
+
             BleConstantData.REPLY_CMD_9F -> {
                 val result = AnalyzeDataFactory.analyze0x9fFor0x1f(buffer.array())
                 LogUtils.d("pack: ${GsonUtils.toJson(result)}")

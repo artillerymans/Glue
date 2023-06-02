@@ -101,11 +101,18 @@ class ExampleUnitTest {
 
     @Test
     fun analysis0x97(){
-        val hexString = "9742705261"
+
+        val longHex = 0xffffffff
+
+
+        println(longHex)
+        println(longHex.toInt())
+
+        /*val hexString = "9742705261"
         val bytes = ConvertUtils.hexString2Bytes(hexString)
         println("size = ${bytes.size}")
         val result = AnalyzeDataFactory.analyze0x97For0x17(ConvertUtils.hexString2Bytes(hexString))
-        println(result.data)
+        println(result.data)*/
     }
 
     @Test

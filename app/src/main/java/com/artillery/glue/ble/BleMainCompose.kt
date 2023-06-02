@@ -2,6 +2,9 @@ package com.artillery.glue.ble
 
 import android.content.Intent
 import android.net.Uri
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.util.Log
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -28,18 +31,23 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.artillery.compose.click
 import com.artillery.compose.paddingVertical
+import com.artillery.glue.R
 import com.artillery.glue.ble.viewModels.BleConnectViewModel
 import com.artillery.glue.model.DebugBaseItem
 import com.artillery.glue.model.DebugDataType
 import com.artillery.glue.ui.NavConstant
 import com.artillery.rwutils.CreateDataFactory
+import com.artillery.rwutils.exts.rgb888toRgb555
+import com.artillery.rwutils.exts.scaleBitmap
 import com.artillery.rwutils.model.AlarmChoiceDay
 import com.artillery.rwutils.model.AlarmClock
 import com.artillery.rwutils.model.BWeather
+import com.artillery.rwutils.model.ContactsItem
 import com.artillery.rwutils.model.DistanceUnit
 import com.artillery.rwutils.model.NoticeType
 import com.artillery.rwutils.model.ProcessDataRequest
@@ -50,6 +58,7 @@ import com.artillery.rwutils.model.WeatherType
 import com.artillery.rwutils.type.Gender
 import com.artillery.rwutils.type.SwitchType
 import com.blankj.utilcode.util.LogUtils
+import com.blankj.utilcode.util.ResourceUtils
 import com.blankj.utilcode.util.TimeUtils
 import com.blankj.utilcode.util.Utils
 import kotlinx.coroutines.launch
@@ -526,6 +535,68 @@ fun BleMainCompose(navController: NavController, viewModel: BleConnectViewModel)
             onSecondClick = {
                 //读取表盘温度单位
                 writeBytes(CreateDataFactory.createReadClockDialUnit())
+            }
+        )
+
+
+        UnitRowLayout(
+            "同步联系人",
+            "-----",
+            onFirstClick = {
+
+                writeListBytes(CreateDataFactory.createSyncContacts(
+                    (0..80).map {
+                        ContactsItem(
+                            "三间隔$it",
+                            "1762037$it"
+                        )
+                    }.toList()
+                ))
+            },
+            onSecondClick = {
+                //待定
+            }
+        )
+
+        UnitRowLayout(
+            "预备发送自定义背景",
+            "发送自定义背景",
+            onFirstClick = {
+                //预备发送自定义背景图片
+                writeBytes(CreateDataFactory.createFastTransferBitmapPrepare())
+            },
+            onSecondClick = {
+                val bytes = ResourceUtils.readAssets2String("imges/test_bg.png").toByteArray()
+                /*val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                val newBitmap = bitmap.scaleBitmap(240f, 240f)
+                val pixels = IntArray(newBitmap.height * newBitmap.width)
+                newBitmap.getPixels(pixels, 0, newBitmap.width, 0, 0, newBitmap.width, newBitmap.height)
+                val buffer = ByteBuffer.allocate(pixels.size * 2).apply {
+                    pixels.forEach { value ->
+                        putShort(value.rgb888toRgb555().toShort())
+                    }
+                }*/
+                //发送自定义背景图片
+                writeListBytes(CreateDataFactory.createFastTransferBitmap(bytes))
+
+
+
+
+            }
+        )
+
+        UnitRowLayout(
+            "预备发送Bin",
+            "发送Bin",
+            onFirstClick = {
+                //预备发送Bin
+                val bytes = ResourceUtils.readAssets2String("bin/jeep_h1_1_7.bin").toByteArray()
+                writeBytes(CreateDataFactory.createFastTransferBinPrepare(bytes.size.toShort()))
+            },
+            onSecondClick = {
+                //发送Bin
+                val bytes = ResourceUtils.readAssets2String("bin/jeep_h1_1_7.bin").toByteArray()
+                writeListBytes(CreateDataFactory.createFastTransferBin(bytes))
             }
         )
 

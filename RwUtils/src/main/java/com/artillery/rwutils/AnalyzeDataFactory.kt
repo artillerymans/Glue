@@ -16,12 +16,12 @@ import com.artillery.rwutils.model.DistanceUnit
 import com.artillery.rwutils.model.MeasureType
 import com.artillery.rwutils.model.NoticeType
 import com.artillery.rwutils.model.RealTimeData
-import com.artillery.rwutils.model.ReplyBgItem
 import com.artillery.rwutils.model.ReplyBinItem
 import com.artillery.rwutils.model.ReplyClockDialItem
-import com.artillery.rwutils.model.ReplyContactsItem
 import com.artillery.rwutils.model.ReplySportItem
 import com.artillery.rwutils.model.ReplyTemperatureItem
+import com.artillery.rwutils.model.ReplyBgItem
+import com.artillery.rwutils.model.ReplyContactsItem
 import com.artillery.rwutils.model.SDD
 import com.artillery.rwutils.model.SleepInfoData
 import com.artillery.rwutils.model.SoftVersionModel
@@ -1123,6 +1123,81 @@ object AnalyzeDataFactory {
 
 
 
+
+
+
+
+
+    /**
+     * 同步联系人后的回复信息
+     */
+    fun analyze0xE6For0x66(bytes: ByteArray): BleResult<ReplyContactsItem>{
+        val buffer = bytes.toBuffer()
+        val cmd = buffer.get()
+        return if (cmd.byte2Int() == BleConstantData.REPLY_CMD_E6) {
+            //序号
+            val order = buffer.short.short2Int()
+            val flag = buffer.get().byte2Int()
+            val state = buffer.get().byte2Int()
+            val number = buffer.short.short2Int()
+
+            BleResult(
+                cmd.byte2Int(),
+                state,
+                ReplyContactsItem(
+                    order,
+                    flag,
+                    state,
+                    number
+                )
+            )
+        } else {
+            BleResult()
+        }
+    }
+
+    /**
+     * 高速传输背景图片回复 包括预备动作的回复 以及发送完成的动作
+     */
+    fun analyze0xB8For0x38(bytes: ByteArray): BleResult<ReplyBgItem>{
+        val buffer = bytes.toBuffer()
+        val cmd = buffer.get()
+        return if (cmd.byte2Int() == BleConstantData.REPLY_CMD_B8) {
+            //序号
+            val order = buffer.short.short2Int()
+            val state = buffer.get().byte2Int()
+            BleResult(
+                cmd.byte2Int(),
+                state,
+                ReplyBgItem(
+                    order,
+                    state
+                )
+            )
+        } else {
+            BleResult()
+        }
+    }
+
+    fun analyze0xB9For0x39(bytes: ByteArray): BleResult<ReplyBinItem>{
+        val buffer = bytes.toBuffer()
+        val cmd = buffer.get()
+        return if (cmd.byte2Int() == BleConstantData.REPLY_CMD_B8) {
+            //序号
+            val order = buffer.int
+            val state = buffer.get().byte2Int()
+            BleResult(
+                cmd.byte2Int(),
+                state,
+                ReplyBinItem(
+                    order,
+                    state
+                )
+            )
+        } else {
+            BleResult()
+        }
+    }
 
 
 
