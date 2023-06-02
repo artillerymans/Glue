@@ -151,7 +151,7 @@ enum class SwitchType{
 
 
     companion object{
-        fun of(value: Int): SwitchType {
+        fun of(value: Int?): SwitchType {
             return when(value){
                 0x01 -> ON
                 0x00 -> OFF

@@ -58,6 +58,15 @@ fun Byte.byte2Int(): Int{
     return this.toInt() and 0xff
 }
 
+fun Short.short2Int(): Int{
+    return this.toInt() and 0xffff
+}
+
+
+fun Int?.orEmpty(def: Int = 0): Int{
+    return this ?: def
+}
+
 
 
 

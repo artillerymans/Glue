@@ -8,6 +8,8 @@ import com.artillery.rwutils.crc.crc
 import com.artillery.rwutils.exts.byte2Int
 import com.artillery.rwutils.exts.toBuffer
 import com.artillery.rwutils.exts.zeroByte
+import com.artillery.rwutils.model.ContactsItem
+import com.artillery.rwutils.model.SleepInfoData
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
@@ -17,6 +19,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import org.junit.Test
+import java.awt.font.TextAttribute
 
 import java.nio.ByteBuffer
 import java.time.LocalDateTime
@@ -29,6 +32,72 @@ import kotlin.experimental.and
  */
 class ExampleUnitTest {
 
+    @Test
+    fun test0x95(){
+        val bytes = ConvertUtils.hexString2Bytes("9500026477A86C0F026477ABF00F01")
+        println(bytes.contentToString())
+        val result = AnalyzeDataFactory.analyze0x95For0x15(bytes)
+        println(result)
+
+    }
+
+
+    @Test
+    fun testpAr(){
+        val value = "See [testing documentation](http://d.android.com/tools/testing)" +
+                ".Example local unit test, which will execute on the development machine (host)." +
+                "ExampleUnitTest" +
+                "ExampleUnitTest" +
+                "ExampleUnitTest" +
+                "ExampleUnitTest" +
+                "ExampleUnitTest" +
+                "ExampleUnitTest" +
+                "ExampleUnitTest" +
+                "ExampleUnitTest5"
+
+        println(test1(value.toByteArray()))
+
+
+    }
+
+
+    private fun test1(data: ByteArray): ByteArray{
+        val chunkSize = 25
+        return ByteBuffer.allocate(data.size / chunkSize).apply {
+            var a: Byte = 0
+            var index = 7
+
+            for (i in data.indices step chunkSize) {
+                val endIndex = (i + chunkSize).coerceAtMost(data.size)
+                val sub = data.sliceArray(i until endIndex)
+
+                for (byteValue in sub) {
+                    val bit: Byte = if (byteValue.toInt() == 0xFF) 0 else 1
+                    a = (a.toInt() or (bit.toInt() shl index)).toByte()
+                    if (index == 0) {
+                        put(a)
+                        a = 0
+                        index = 7
+                    } else {
+                        index--
+                    }
+                }
+            }
+        }.array()
+    }
+
+
+    @Test
+    fun testSyncContacts(){
+        val list = mutableListOf<ContactsItem>().apply {
+            add(ContactsItem("华为消费者服务热线", "950800"))
+            add(ContactsItem("西乡派出所", "27925110"))
+        }
+        println(list)
+        val byteArrays = CreateDataFactory.createSyncContacts(list)
+        println(byteArrays)
+
+    }
 
     @Test
     fun analysis0x97(){

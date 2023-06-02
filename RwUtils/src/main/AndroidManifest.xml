@@ -1,4 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+
+    <application>
+
+
+        <!--用了他们的Ota的包加这个要不然在12以上会报错-->
+        <receiver android:name="npble.nopointer.ble.scan.BleScanner$ScannerReceiver"
+            android:exported="false"
+            tools:node="merge"/>
+
+    </application>
 
 </manifest>

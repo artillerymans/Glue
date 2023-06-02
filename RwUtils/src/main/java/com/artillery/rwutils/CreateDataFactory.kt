@@ -6,12 +6,14 @@ import com.artillery.rwutils.cmd.BleConstantData
 import com.artillery.rwutils.exts.fillZeros
 import com.artillery.rwutils.exts.toByte
 import com.artillery.rwutils.exts.toByteArrays
+import com.artillery.rwutils.exts.toBytes
 import com.artillery.rwutils.exts.toBytesLowerThree
 import com.artillery.rwutils.model.AlarmClock
 import com.artillery.rwutils.model.BWeather
 import com.artillery.rwutils.model.BloodTimeType
 import com.artillery.rwutils.model.ContactsItem
 import com.artillery.rwutils.model.DistanceUnit
+import com.artillery.rwutils.model.Lng
 import com.artillery.rwutils.model.NoticeType
 import com.artillery.rwutils.model.ProcessDataRequest
 import com.artillery.rwutils.model.SDD
@@ -30,6 +32,7 @@ import java.util.Calendar
 import java.util.Locale
 import java.util.TimeZone
 import kotlin.experimental.or
+import kotlin.math.min
 
 /**
  * @author : zhiweizhu
@@ -183,14 +186,17 @@ object CreateDataFactory {
 
     /**
      * 设置闹钟 最大设置数量3个
+     * @param serialNumber 0x03 设置第1，2，3闹钟；0x06设置第 4,5,6 闹钟
+     *
      */
     fun createSettingsAlarmClock(
         list: MutableList<AlarmClock>,
+        serialNumber: Int = 0x03,
     ): ByteArray {
         return ByteArray(20).apply {
             ByteBuffer.wrap(this).apply {
                 put(BleConstantData.CMD_0x02)
-                put(0x03)
+                put(serialNumber.toByte())
                 list.forEach { item ->
                     put(item.enable.toByte())
                     putShort(item.startTime)
@@ -206,7 +212,7 @@ object CreateDataFactory {
     fun createSettingsClockDialUnit(
         clockDialOrder: Int,
         temperatureUnit: TemperatureUnit,
-        distanceUnit: DistanceUnit
+        distanceUnit: DistanceUnit,
     ): ByteArray {
         return ByteArray(5).apply {
             ByteBuffer.wrap(this).apply {
@@ -231,11 +237,11 @@ object CreateDataFactory {
                 put(BleConstantData.CMD_0x02)
                 put(0x04)
                 list.forEach { item ->
-                    when(item){
+                    when (item) {
                         is SDD.Sedentary -> {
                             put(item.enable.toByte())
                             //间隔时间
-                            if (item.interval > 0.toByte()){
+                            if (item.interval > 0.toByte()) {
                                 put(item.interval)
                             }
                             put(item.startHour)
@@ -243,10 +249,11 @@ object CreateDataFactory {
                             put(item.endHour)
                             put(item.endMinute)
                         }
+
                         is SDD.DrinkingWater -> {
                             put(item.enable.toByte())
                             //间隔时间
-                            if (item.interval > 0.toByte()){
+                            if (item.interval > 0.toByte()) {
                                 put(item.interval)
                             }
                             put(item.startHour)
@@ -254,6 +261,7 @@ object CreateDataFactory {
                             put(item.endHour)
                             put(item.endMinute)
                         }
+
                         is SDD.DonTDisturb -> {
                             put(item.enable.toByte())
                             put(item.startHour)
@@ -261,6 +269,7 @@ object CreateDataFactory {
                             put(item.endHour)
                             put(item.endMinute)
                         }
+
                         else -> {
 
                         }
@@ -276,9 +285,9 @@ object CreateDataFactory {
      */
     fun createSettingBlood(
         bloodCorrect: Byte,  //血糖校准值 40 代表 4.0
-        bloodTimeType: BloodTimeType
+        bloodTimeType: BloodTimeType,
     ): ByteArray {
-       return ByteArray(8).apply {
+        return ByteArray(8).apply {
             ByteBuffer.wrap(this).apply {
                 put(BleConstantData.CMD_0x02)
                 put(0x09)
@@ -384,7 +393,7 @@ object CreateDataFactory {
      * 血糖
      */
     fun createBloodByTime(
-        data: ProcessDataRequest.Blood
+        data: ProcessDataRequest.Blood,
     ): ByteArray {
         return createDataByTime(data)
     }
@@ -484,7 +493,7 @@ object CreateDataFactory {
      * 天气数据
      */
     fun createWeather(
-        list: List<BWeather>   //当天天气在第0位
+        list: List<BWeather>,   //当天天气在第0位
     ): ByteArray {
         return ByteArray(20).apply {
             ByteBuffer.wrap(this).apply {
@@ -538,9 +547,11 @@ object CreateDataFactory {
 
     /**
      * 读取闹钟
+     * 0x03  读取1，2，3闹钟
+     * 0x06 读取4，5，6 闹钟
      */
-    fun createReadAlarms(): ByteArray {
-        return createRead(0x03)
+    fun createReadAlarms(serialNumber: Int = 0x03): ByteArray {
+        return createRead(serialNumber)
     }
 
     /**
@@ -560,7 +571,7 @@ object CreateDataFactory {
     }
 
     private fun createRead(
-        serialNumber: Int
+        serialNumber: Int,
     ): ByteArray {
         return ByteArray(2).apply {
             ByteBuffer.wrap(this).apply {
@@ -578,7 +589,7 @@ object CreateDataFactory {
         clockNumber: Int = 0,  //表盘序号0-15
         temperatureUnit: TemperatureUnit,
         distanceUnit: DistanceUnit,
-        serialNumber: Int = 2
+        serialNumber: Int = 2,
     ): ByteArray {
         return ByteArray(5).apply {
             ByteBuffer.wrap(this).apply {
@@ -610,7 +621,7 @@ object CreateDataFactory {
         serialNumber: Short,
         type: Int,
         text: String,
-        cmd: Byte
+        cmd: Byte,
     ): ByteArray {
         return ByteArray(20).apply {
             ByteBuffer.wrap(this).apply {
@@ -619,14 +630,11 @@ object CreateDataFactory {
                 put(type.toByte())  //0 表示写入的是姓名 1 表示写入的是电话号码
                 put(0)  //预留的 默认0
                 val dataBytes = text.toByteArray()
-                if (limit() >= dataBytes.size) {
-                    put(dataBytes)
-                    //如果后续还有空间对进行补0
-                    if (hasRemaining()) {
-                        fillZeros()
-                    }
-                } else {
-                    put(dataBytes.toMutableList().subList(0, limit()).toByteArray())
+                val minValue = min(dataBytes.size, 15)
+                put(dataBytes.toMutableList().subList(0, minValue).toByteArray())
+                //如果后续还有空间对进行补0
+                if (hasRemaining()) {
+                    fillZeros()
                 }
             }
         }
@@ -657,25 +665,21 @@ object CreateDataFactory {
         }
     }
 
-
     /**
      * 创建高速传递图片
      */
-    fun createFastTransferBitMap(
-        bitmap: Bitmap
-    ): List<ByteArray> {
+    fun createFastTransferBitmap(bytes: ByteArray): List<ByteArray> {
         return mutableListOf<ByteArray>().also {
-            val tempBytes = bitmap.toByteArrays()
-            bitmap.recycle()
             var offset = 0
-            while (offset < tempBytes.size) {
-                val remaining = tempBytes.size - offset
+            while (offset < bytes.size) {
+                val remaining = bytes.size - offset
                 val length = if (remaining > 224) 224 else remaining
                 it.add(ByteArray(length + 3).apply {
                     ByteBuffer.wrap(this).apply {
                         put(BleConstantData.CMD_0x38)  //命令码
                         putShort(it.size.toShort()) //序列号从0开始
-                        put(tempBytes, offset, length)
+                        put(bytes, offset, length)
+                        //put(176.toByte())  //固定写死
                     }
                 })
                 offset += length
@@ -685,35 +689,42 @@ object CreateDataFactory {
                 ByteBuffer.wrap(this).apply {
                     put(BleConstantData.CMD_0x38)
                     putShort((0xffff).toShort())
-                    put(0)  //校验和
+                    put(bytes.size.toBytes())  //校验和
                 }
             })
         }
+    }
+
+    /**
+     * 创建高速传递图片
+     */
+    fun createFastTransferBitmap(
+        bitmap: Bitmap,
+    ): List<ByteArray> {
+        val tempBytes = bitmap.toByteArrays()
+        bitmap.recycle()
+        return createFastTransferBitmap(tempBytes)
     }
 
 
     /**
      * 高速传输bin 准备
      */
-    fun createFastTransferBinPrepare(): ByteArray {
+    fun createFastTransferBinPrepare(size: Short): ByteArray {
         return ByteArray(6).apply {
             ByteBuffer.wrap(this).apply {
                 put(BleConstantData.CMD_0x39)
                 put(byteArrayOf(0xff.toByte(), 0xff.toByte(), 0xfe.toByte()))
-                putShort(0) //数据帧的有效数据大小
+                putShort(size) //数据帧的有效数据大小
             }
         }
-
     }
 
     /**
      * 传输bin文件
      */
-    fun createFastTransferBin(
-        path: String
-    ): List<ByteArray> {
+    fun createFastTransferBin(bytes: ByteArray): List<ByteArray> {
         val list = mutableListOf<ByteArray>()
-        val bytes = FileIOUtils.readFile2BytesByStream(path)
         var offset = 0
         while (offset < bytes.size) {
             val remaining = bytes.size - offset
@@ -738,6 +749,16 @@ object CreateDataFactory {
         return list
     }
 
+    /**
+     * 传输bin文件
+     */
+    fun createFastTransferBin(
+        path: String,
+    ): List<ByteArray> {
+        val bytes = FileIOUtils.readFile2BytesByStream(path)
+        return createFastTransferBin(bytes)
+    }
+
 
     /**
      * 名片 发送预备
@@ -752,7 +773,7 @@ object CreateDataFactory {
     }
 
     fun crateCard(
-        bitmap: Bitmap
+        bitmap: Bitmap,
     ): List<ByteArray> {
 
         val list = mutableListOf<ByteArray>()
@@ -806,7 +827,7 @@ object CreateDataFactory {
      * 传输运动轨迹
      */
     fun createFastTransferTrack(
-        bitmap: Bitmap
+        bitmap: Bitmap,
     ): List<ByteArray> {
         val list = mutableListOf<ByteArray>()
         val content = bitmap.toByteArrays()
@@ -834,6 +855,231 @@ object CreateDataFactory {
             }
         })
         return list
+    }
+
+
+    /**
+     * 手机下发启动停止实时体温检测
+     */
+    fun createTemperatureRealTimeDetection(enable: SwitchType): ByteArray {
+        return ByteArray(2).apply {
+            ByteBuffer.wrap(this).apply {
+                put(BleConstantData.CMD_0x6A)
+                put(enable.toByte())
+            }
+        }
+    }
+
+    /**
+     * 获取设备体温检测历史数据
+     */
+    fun createHistoryOfBodyTemperature(
+        year: Int,
+        month: Int,
+        day: Int,
+    ): ByteArray {
+        return ByteArray(4).apply {
+            ByteBuffer.wrap(this).apply {
+                put(BleConstantData.CMD_0x1A)
+                if (year >= 2000) {
+                    put((year - 2000).toByte())
+                } else {
+                    put(year.toByte())
+                }
+                put(month.toByte())
+                put(day.toByte())
+            }
+        }
+    }
+
+    /**
+     * 体温定时检测开关
+     * 定时间隔 单位分钟(10,20,30,40,50,60)
+     */
+    fun createTemperatureTimingDetectionSwitch(
+        enable: SwitchType,
+        interval: Int,
+    ): ByteArray {
+        return ByteArray(3).apply {
+            ByteBuffer.wrap(this).apply {
+                put(BleConstantData.CMD_0x6E)
+                put(enable.toByte())
+                put(interval.toByte())
+            }
+        }
+    }
+
+    /**
+     * 同步手环运动记录
+     */
+    fun createSyncWatchSportsHistory(): ByteArray {
+        return ByteArray(2).apply {
+            ByteBuffer.wrap(this).apply {
+                put(BleConstantData.CMD_0x21)
+                put(0.toByte())
+            }
+        }
+    }
+
+    /**
+     * 同步经纬度
+     */
+    fun createLngSync(
+        lng: Lng,
+    ): ByteArray {
+        return ByteArray(12).apply {
+            ByteBuffer.wrap(this).apply {
+                put(BleConstantData.CMD_0x59)
+                put(lng.status.toByte())
+                put(lng.longitudeDirection.toByte())
+                put(lng.longitudeDegree.toByte())
+                put(lng.longitudeMinute.toByte())
+                put(lng.longitudeSecond.toByte())
+                put(lng.longitudeSecondSub.toByte())
+
+                put(lng.latitudeDirection.toByte())
+                put(lng.latitudeDegree.toByte())
+                put(lng.latitudeMinute.toByte())
+                put(lng.latitudeSecond.toByte())
+                put(lng.latitudeSecondSub.toByte())
+            }
+        }
+    }
+
+
+    /**
+     * 收款码 预备动作
+     * @param payType 0: 支付宝 1:微信 2: 其他
+     */
+    fun createQrPrepare(
+        payType: Int,
+    ): ByteArray {
+        return ByteArray(4).apply {
+            ByteBuffer.wrap(this).apply {
+                put(BleConstantData.CMD_0x3a.toByte())
+                put(byteArrayOf(0xff.toByte(), 0xfe.toByte()))
+                put(payType.toByte())
+            }
+        }
+    }
+
+
+    /**
+     * 收款码
+     */
+    fun createQr(bytes: ByteArray): List<ByteArray> {
+        if (bytes.isEmpty()) {
+            return emptyList()
+        }
+        val buffer = ByteBuffer.wrap(bytes)
+        var index = 0
+        val list = mutableListOf<ByteArray>()
+        while (buffer.hasRemaining()) {
+            var temp: ByteArray
+            if (buffer.remaining() >= 16) {
+                temp = ByteArray(19).apply {
+                    ByteBuffer.wrap(this).apply {
+                        put(BleConstantData.CMD_0x3a.toByte())
+                        putShort(index.toShort())
+                        val tempBytes = ByteArray(16)
+                        buffer.get(tempBytes)  //获取16个字节
+                        put(tempBytes)
+                    }
+                }
+                list.add(temp)
+                index += 1
+
+                if (buffer.hasRemaining()) {
+                    if (buffer.remaining() >= 9) {
+                        temp = ByteArray(19).apply {
+                            ByteBuffer.wrap(this).apply {
+                                put(BleConstantData.CMD_0x3a.toByte())
+                                putShort(index.toShort())
+                                val tempBytes = ByteArray(9)
+                                buffer.get(tempBytes)  //获取9个字节
+                                put(tempBytes)
+                                if (this.hasRemaining()) {
+                                    fillZeros()
+                                }
+                            }
+                        }
+                        list.add(temp)
+                        index += 1
+                    }else {
+                        val limit = buffer.remaining()
+                        temp = ByteArray(19).apply {
+                            ByteBuffer.wrap(this).apply {
+                                put(BleConstantData.CMD_0x3a.toByte())
+                                putShort(index.toShort())
+                                val tempBytes = ByteArray(limit)
+                                buffer.get(tempBytes)  //获取limit个字节
+                                put(tempBytes)
+                                if (this.hasRemaining()) {
+                                    fillZeros()
+                                }
+                            }
+                        }
+                        list.add(temp)
+                        index += 1
+                    }
+                }
+            } else {
+                val limit = buffer.remaining()
+                temp = ByteArray(19).apply {
+                    ByteBuffer.wrap(this).apply {
+                        put(BleConstantData.CMD_0x3a.toByte())
+                        putShort(index.toShort())
+                        val tempBytes = ByteArray(limit)
+                        buffer.get(tempBytes)  //获取limit个字节
+                        put(tempBytes)
+                        if (this.hasRemaining()) {
+                            fillZeros()
+                        }
+                    }
+                }
+                list.add(temp)
+                index += 1
+            }
+        }
+        //结束符
+        list.add(
+            ByteArray(4).apply {
+                ByteBuffer.wrap(this).apply {
+                    put(BleConstantData.CMD_0x3a.toByte())
+                    put(byteArrayOf(0xff.toByte(), 0xff.toByte(), 0xff.toByte()))
+                }
+            }
+        )
+        return list
+    }
+
+
+    private fun qrCheck(data: ByteArray): ByteArray{
+        return ByteBuffer.allocate(data.size / 4).apply {
+            var value: Byte = 0
+            var index = 7
+
+            for (i in data.indices step 4) {
+                val endIndex = (i + 4).coerceAtMost(data.size)
+                val sub = data.sliceArray(i until endIndex)
+                val rgb = sub.fetchUInt24Value()
+                val bit: Byte = if (rgb == 0xFFFFFF) 0 else 1
+                value = (value.toInt() or (bit.toInt() shl index)).toByte()
+                if (index == 0) {
+                    put(value)
+                    value = 0
+                    index = 7
+                } else {
+                    index--
+                }
+            }
+        }.array()
+    }
+
+    private fun ByteArray.fetchUInt24Value(): Int {
+        return (this[0].toInt() and 0xFF shl 16) or
+                (this[1].toInt() and 0xFF shl 8) or
+                (this[2].toInt() and 0xFF)
     }
 
 

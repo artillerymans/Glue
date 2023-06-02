@@ -1,5 +1,7 @@
 package com.artillery.glue.ble
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -49,10 +51,11 @@ import com.artillery.rwutils.type.Gender
 import com.artillery.rwutils.type.SwitchType
 import com.blankj.utilcode.util.LogUtils
 import com.blankj.utilcode.util.TimeUtils
-import com.blankj.utilcode.util.ToastUtils
+import com.blankj.utilcode.util.Utils
 import kotlinx.coroutines.launch
 import java.nio.ByteBuffer
 import java.time.LocalDateTime
+
 
 /**
  * @author : zhiweizhu
@@ -523,6 +526,26 @@ fun BleMainCompose(navController: NavController, viewModel: BleConnectViewModel)
             onSecondClick = {
                 //读取表盘温度单位
                 writeBytes(CreateDataFactory.createReadClockDialUnit())
+            }
+        )
+
+
+        UnitRowLayout(
+            "启动有礼",
+            "启动想你",
+            onFirstClick = {
+                val intent = Intent(Intent.ACTION_VIEW)
+                intent.data = Uri.parse("txc_pay_store://com.txc.store/wqf")
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                Utils.getApp().startActivity(intent)
+            },
+            onSecondClick = {
+
+
+                val intent = Intent(Intent.ACTION_VIEW)
+                intent.data = Uri.parse("txc_pay_agent://com.txc.agent/wqf")
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                Utils.getApp().startActivity(intent)
             }
         )
 

@@ -48,7 +48,7 @@ sealed class AlarmChoiceDay(val byte: Int) {
     class Sunday(byte: Int = 0x40) : AlarmChoiceDay(byte)
 
     companion object{
-        fun of(value: Int): AlarmChoiceDay{
+        fun of(value: Int): AlarmChoiceDay {
             return when(value){
                 0x01 -> Monday()
                 0x02 -> Tuesday()
@@ -209,7 +209,7 @@ sealed class TemperatureUnit(val value: Int) {
     class HuaCelsius(value: Int = 1) : TemperatureUnit(value)
 
     companion object{
-        fun of(value: Int): TemperatureUnit{
+        fun of(value: Int): TemperatureUnit {
             return when(value){
                 0 -> Centigrade()
                 1 -> HuaCelsius()
@@ -242,9 +242,26 @@ sealed class DistanceUnit(val value: Int) {
 /**
  * 联系人
  */
+@Keep
 data class ContactsItem(
     var name: String,
     var mobile: String
+)
+
+@Keep
+data class Lng(
+    var status: Int,  //状态 1 成功 0失败
+    var longitudeDirection: String, //经度  东经：“E” 西经 “W”
+    var longitudeDegree: Int,  //度
+    var longitudeMinute:Int, //分
+    var longitudeSecond:Int, //秒
+    var longitudeSecondSub:Int, //秒小数部分
+
+    var latitudeDirection: String,  //纬度 北纬："N" 南纬：“S”
+    var latitudeDegree: Int,
+    var latitudeMinute:Int,
+    var latitudeSecond:Int,
+    var latitudeSecondSub:Int
 )
 
 
@@ -257,3 +274,5 @@ data class BleResult<T>(
         return code == BleConstantData.SUCCESS_BLE_CODE
     }
 }
+
+
