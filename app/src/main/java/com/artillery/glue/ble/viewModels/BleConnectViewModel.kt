@@ -124,7 +124,7 @@ class BleConnectViewModel : ViewModel() {
     private fun addDevice(device: BluetoothDevice) {
         if (!BleHelper.getInstance().isContains(device.address)) {
             mCurrentDevice = BleDeviceManager().also {
-                it.connectDevice(device)
+                it.connectByBluetoothDevice(device)
                 it.setChannel(mBleDataChangeChannel)
                 viewModelScope.launch {
                     it.stateAsFlow().collect { state ->
@@ -144,7 +144,7 @@ class BleConnectViewModel : ViewModel() {
                     }
                 }
                 if (it.connectionState == BluetoothProfile.STATE_DISCONNECTED) {
-                    it.connectDevice(device)
+                    it.connectByBluetoothDevice(device)
                 }
             }
 
@@ -159,6 +159,7 @@ class BleConnectViewModel : ViewModel() {
     fun disConnect() {
         BleHelper.getInstance().getBleDeviceManager()?.let {
             if (it.isConnected) {
+                it.disconnect().enqueue()
                 it.bluetoothDevice?.let { device ->
                     removeDevice(device)
                 }

@@ -63,6 +63,7 @@ class BleHelper private constructor(){
 
     fun closeAll(){
         mBleManagerMap.values.forEach { manager ->
+            manager.disconnect().enqueue()
             manager.close()
         }
         mBleManagerMap.clear()

@@ -643,6 +643,7 @@ fun BleMainCompose(navController: NavController, viewModel: BleConnectViewModel)
                                 when (it.type) {
                                     DebugDataType.write -> "写入指令:0x${it.hexCmd}"
                                     DebugDataType.notice -> "接收指令:0x${it.hexCmd}"
+                                    else -> {}
                                 }
                             }->${it.formatTime}",
                             style = TextStyle(fontSize = 12.sp, color = Color.LightGray)

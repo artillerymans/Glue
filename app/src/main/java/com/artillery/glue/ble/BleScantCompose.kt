@@ -82,7 +82,7 @@ fun BleScantCompose(nav: NavController, onSelectDevice: (BluetoothDevice) -> Uni
             if (tempList.size == result.values.size) {
                 scantViewModel.startScant()
             } else {
-                val q1 = result.firstNotNullOfOrNull { value -> if (value.key.equals(Manifest.permission.ACCESS_COARSE_LOCATION)) value.value else false } ?: false
+                val q1 = result.firstNotNullOfOrNull { value -> if (value.key == Manifest.permission.ACCESS_COARSE_LOCATION) value.value else false } ?: false
                 LogUtils.d("BleScantCompose: q1 = $q1")
                 if (q1) {
                     scantViewModel.startScant()

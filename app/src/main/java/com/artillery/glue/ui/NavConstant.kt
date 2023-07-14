@@ -6,8 +6,12 @@ package com.artillery.glue.ui
  */
 object NavConstant{
     object Ble {
+        const val HOME = "home"
         const val Scant = "scant"
         const val ConnectBle = "ConnectBle"
         const val Tools = "Tools"
+
+
+        const val JW002 = "JW002"
     }
 }

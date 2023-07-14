@@ -6,6 +6,7 @@ import android.bluetooth.BluetoothGattCharacteristic
 import android.content.Context
 import android.os.Handler
 import android.util.Log
+import com.artillery.connect.base.ABaseBleManager
 import com.blankj.utilcode.util.ConvertUtils
 import com.blankj.utilcode.util.LogUtils
 import com.blankj.utilcode.util.Utils
@@ -25,13 +26,10 @@ import no.nordicsemi.android.ble.ktx.suspend
  * @author : zhiweizhu
  * create on: 2023/5/24 上午11:27
  */
-class BleDeviceManager(context: Context = Utils.getApp()) : BleManager(context) {
+class BleDeviceManager(context: Context = Utils.getApp()) : ABaseBleManager(context) {
 
     private var mReadNotificationCharacteristic: BluetoothGattCharacteristic? = null
     private var mWriteCharacteristic: BluetoothGattCharacteristic? = null
-
-    private val mDefaultScope = CoroutineScope(Dispatchers.Default)
-
     private var mReadNotificationCharacteristicChannel: SendChannel<ByteArray>? = null
 
     override fun isRequiredServiceSupported(gatt: BluetoothGatt): Boolean {
@@ -45,84 +43,19 @@ class BleDeviceManager(context: Context = Utils.getApp()) : BleManager(context) 
         return mReadNotificationCharacteristic != null && mWriteCharacteristic != null
     }
 
-    override fun log(priority: Int, message: String) {
-        if (BuildConfig.DEBUG) {
-            LogUtils.d("Ble Log: $message")
-        }
-    }
-
-
-    fun connectDevice(
-        device: BluetoothDevice,
-        retry: Int = 3,
-        retryDelay: Int = 3000,
-        timeout: Long = 15_000
-    ){
-        mDefaultScope.launch {
-            try {
-                connect(device)
-                    .retry(retry, retryDelay)
-                    .timeout(timeout)
-                    .useAutoConnect(true)
-                    .suspend()
-            }catch (e: Exception){
-                e.printStackTrace()
-            }
-        }
-    }
-
     fun setChannel(channel: Channel<ByteArray>){
         mReadNotificationCharacteristicChannel = channel
     }
 
-    fun post(bytes: List<ByteArray>, writeType: Int = BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE, delay: Long = 0L){
-        mDefaultScope.launch {
-            if (delay > 0){
-                delay(delay)
-            }
-            send(bytes, writeType)
+
+    override fun onGetCharacteristic(type: Int): BluetoothGattCharacteristic? {
+       return when(type){
+            WRITE -> mWriteCharacteristic
+            READ -> mReadNotificationCharacteristic
+            NOTIFICATION -> mReadNotificationCharacteristic
+            else -> null
         }
     }
-
-    private suspend fun send(bytes: List<ByteArray>,
-                             @WriteType writeType: Int = BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE){
-        var indexRetry = 0
-        bytes.forEachIndexed{ index, data ->
-            try {
-                val tempData = suspendCancellableCoroutine { continuation ->
-                    indexRetry = index
-                    writeCharacteristic(
-                        mWriteCharacteristic,
-                        data,
-                        writeType
-                    ).done {
-                        continuation.resumeWith(Result.success(data))
-                    }.fail { device, status ->
-                        continuation.resumeWith(Result.failure(Exception("写入数据失败，状态码 ->$status")))
-                    }.enqueue()
-                }
-                LogUtils.d("写入数据$index:->${ConvertUtils.bytes2HexString(tempData)}")
-            }catch (e: Exception){
-                e.printStackTrace()
-                return@forEachIndexed
-            }finally {
-                //数据多的话进行延时处理
-                if (bytes.size > 10){
-                    delay(100)
-                }
-            }
-
-        }
-
-        if (indexRetry != 0){
-            val tempBytes = bytes.subList(indexRetry, bytes.size)
-            LogUtils.d("send: 开始重试发送数据$indexRetry")
-            post(tempBytes, writeType, 3000L)
-        }
-    }
-
-
-
 
 
     override fun initialize() {
@@ -159,33 +92,6 @@ class BleDeviceManager(context: Context = Utils.getApp()) : BleManager(context) 
         readCharacteristic(mReadNotificationCharacteristic).with { device, data ->
             LogUtils.d("initialize: 读操作 --> ${ConvertUtils.bytes2HexString(data.value)}")
         }.enqueue()
-
-
-        bluetoothDevice?.also {
-            if (it.bondState == BluetoothDevice.BOND_NONE){
-                //发起配对
-                bluetoothDevice?.createBond()
-            }
-        }
-
-
-        /*beginAtomicRequestQueue()
-            .add(
-                enableNotifications(mReadNotificationCharacteristic)
-                    .done {
-                        LogUtils.d("initialize: Enabled mReadNotificationCharacteristic Notifications")
-                    }
-                    .fail { device, status ->
-                        val deviceMac = device?.address.orEmpty()
-                        LogUtils.d("initialize: deviceMac = $deviceMac ==> $status")
-                        disconnect().enqueue()
-                    }
-            )
-            .done {
-                val deviceName = it?.address.orEmpty()
-                LogUtils.d("initialize: deviceName ===> Initialized")
-            }
-            .enqueue()*/
 
     }
 

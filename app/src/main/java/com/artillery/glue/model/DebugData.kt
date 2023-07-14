@@ -3,7 +3,8 @@ package com.artillery.glue.model
 
 enum class DebugDataType{
     write,
-    notice
+    notice,
+    noticeAck
 }
 
 sealed class DebugBaseItem{

@@ -24,12 +24,21 @@ import com.artillery.glue.ble.BleConnectCompose
 import com.artillery.glue.ble.BleMainCompose
 import com.artillery.glue.ble.BleScantCompose
 import com.artillery.glue.ble.viewModels.BleConnectViewModel
+import com.artillery.glue.ble.viewModels.JW002ConnectViewModel
+import com.artillery.glue.home.BleHome
 import com.artillery.glue.ui.NavConstant
+import com.artillery.glue.ui.jw002.JW002Compose
 import com.artillery.glue.ui.theme.GlueTheme
 
 class MainActivity : ComponentActivity() {
 
+
+    private var mCurrent: String = ""
+
     val mConnectViewModel by viewModels<BleConnectViewModel>()
+    val mJW002ConnectViewModel by viewModels<JW002ConnectViewModel>()
+
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -44,17 +53,34 @@ class MainActivity : ComponentActivity() {
                 ) {
                     NavHost(
                         navController = navController,
-                        startDestination = NavConstant.Ble.Tools
+                        startDestination = NavConstant.Ble.HOME
                     ){
 
+                        composable(NavConstant.Ble.HOME){
+                            BleHome(navController)
+                        }
+
+                        composable(NavConstant.Ble.JW002){
+                            mCurrent = NavConstant.Ble.JW002
+                            JW002Compose(navController, mJW002ConnectViewModel)
+                        }
+
                         composable(NavConstant.Ble.Tools){
+                            mCurrent = NavConstant.Ble.Tools
                             BleMainCompose(navController, mConnectViewModel)
                         }
 
                         composable(NavConstant.Ble.Scant){
                             BleScantCompose(nav = navController){
                                 selectDevice.value = it
-                                mConnectViewModel.connect(it)
+                                when(mCurrent){
+                                    NavConstant.Ble.JW002 -> {
+                                        mJW002ConnectViewModel.connect(it)
+                                    }
+                                    NavConstant.Ble.Tools -> {
+                                        mConnectViewModel.connect(it)
+                                    }
+                                }
                                 navController.navigateUp()
                             }
                         }

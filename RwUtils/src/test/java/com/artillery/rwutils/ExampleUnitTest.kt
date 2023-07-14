@@ -16,7 +16,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.flatMapConcat
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.suspendCancellableCoroutine
 import org.junit.Test
 import java.awt.font.TextAttribute
@@ -24,6 +27,7 @@ import java.awt.font.TextAttribute
 import java.nio.ByteBuffer
 import java.time.LocalDateTime
 import kotlin.experimental.and
+import kotlin.system.measureTimeMillis
 
 /**
  * Example local unit test, which will execute on the development machine (host).
@@ -32,6 +36,31 @@ import kotlin.experimental.and
  */
 class ExampleUnitTest {
 
+    
+    @Test
+    fun testFlow(){
+        runBlocking {
+            val time = measureTimeMillis {
+                val flow1 = flow {
+                    println("emit ${Thread.currentThread()}")
+                    emit("stuInfo 1")
+                    emit("stuInfo 2")
+                    emit("stuInfo 3")
+                }
+                flow1.flatMapConcat {
+                    //flow2
+                    flow {
+                        emit("$it teachInfo")
+                        delay(1000)
+                    }
+                }.collect {
+                    println("collect $it")
+                }
+            }
+            println("use time:$time")
+        }
+    }
+    
     @Test
     fun test0x95(){
         val bytes = ConvertUtils.hexString2Bytes("9500026477A86C0F026477ABF00F01")

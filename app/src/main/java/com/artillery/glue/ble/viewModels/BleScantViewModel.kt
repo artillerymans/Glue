@@ -1,6 +1,7 @@
 package com.artillery.glue.ble.viewModels
 
 import android.bluetooth.BluetoothDevice
+import android.os.ParcelUuid
 import androidx.lifecycle.ViewModel
 import com.artillery.glue.scant.createScanSettings
 import com.blankj.utilcode.util.LogUtils
@@ -67,8 +68,14 @@ class BleScantViewModel: ViewModel() {
     }
 
 
+    /* */
     private val mScantFilterList by lazy(LazyThreadSafetyMode.NONE) {
-        mutableListOf<ScanFilter>()
+        mutableListOf<ScanFilter>(
+            /*JW002*/
+            ScanFilter.Builder()
+                .setServiceUuid(ParcelUuid.fromString("0000fee7-0000-1000-8000-00805f9b34fb"))
+                .build()
+        )
     }
 
     private var mScanSetting: ScanSettings = createScanSettings()
