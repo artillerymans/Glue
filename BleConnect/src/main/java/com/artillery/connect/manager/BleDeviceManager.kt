@@ -1,30 +1,21 @@
-package com.artillery.connect
+package com.artillery.connect.manager
 
-import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattCharacteristic
 import android.content.Context
-import android.os.Handler
-import android.util.Log
+import com.artillery.connect.ConstantServiceUUID
 import com.artillery.connect.base.ABaseBleManager
 import com.blankj.utilcode.util.ConvertUtils
 import com.blankj.utilcode.util.LogUtils
 import com.blankj.utilcode.util.Utils
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.suspendCancellableCoroutine
-import no.nordicsemi.android.ble.BleManager
-import no.nordicsemi.android.ble.BuildConfig
-import no.nordicsemi.android.ble.annotation.WriteType
-import no.nordicsemi.android.ble.ktx.suspend
 
 /**
  * @author : zhiweizhu
  * create on: 2023/5/24 上午11:27
+ * H1 设备
  */
 class BleDeviceManager(context: Context = Utils.getApp()) : ABaseBleManager(context) {
 

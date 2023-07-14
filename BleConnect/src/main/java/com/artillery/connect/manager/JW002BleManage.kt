@@ -1,10 +1,9 @@
-package com.artillery.glue.ui.jw002
+package com.artillery.connect.manager
 
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattCharacteristic
 import androidx.collection.ArraySet
-import com.artillery.connect.BleDeviceManager
 import com.artillery.connect.base.ABaseBleManager
 import com.artillery.connect.interfaces.IConnectListening
 import com.artillery.connect.interfaces.IDataChangeListening
@@ -22,6 +21,7 @@ import java.util.UUID
 /**
  * @author : zhiweizhu
  * create on: 2023/7/13 下午6:02
+ * JW002设备
  */
 class JW002BleManage {
 
@@ -262,8 +262,6 @@ class JW002BleManage {
                     disconnect().enqueue()
                 }
                 .enqueue()
-
-
         }
 
 
@@ -283,6 +281,21 @@ class JW002BleManage {
             mWriteAckCharacteristic = null
             mNotifyCharacteristic = null
             mNotifyAckCharacteristic = null
+        }
+
+
+        private fun bindDevice(){
+            /*是否发起绑定*/
+            try {
+                bluetoothDevice?.let {
+                    if (it.bondState == BluetoothDevice.BOND_NONE){
+                        //发起配对
+                        bluetoothDevice?.createBond()
+                    }
+                }
+            }catch (e: Exception){
+                e.printStackTrace()
+            }
         }
     }
 

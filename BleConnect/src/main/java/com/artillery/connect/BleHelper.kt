@@ -1,5 +1,7 @@
 package com.artillery.connect
 
+import com.artillery.connect.manager.BleDeviceManager
+
 /**
  * @author : zhiweizhu
  * create on: 2023/5/25 下午5:02

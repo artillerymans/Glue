@@ -12,6 +12,7 @@
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/BleConnect" />
             <option value="$PROJECT_DIR$/ComposeUtils" />
+            <option value="$PROJECT_DIR$/ProtobufLib" />
             <option value="$PROJECT_DIR$/RwUtils" />
             <option value="$PROJECT_DIR$/Scanner" />
             <option value="$PROJECT_DIR$/Utils" />

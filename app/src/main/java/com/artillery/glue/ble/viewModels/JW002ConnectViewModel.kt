@@ -3,42 +3,32 @@ import android.Manifest
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothManager
-import android.bluetooth.BluetoothProfile
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
-import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.artillery.connect.BleDeviceManager
-import com.artillery.connect.BleHelper
+import com.artillery.connect.manager.BleDeviceManager
 import com.artillery.glue.model.DebugBaseItem
 import com.artillery.glue.model.DebugDataType
-import com.artillery.glue.ui.jw002.JW002BleManage
-import com.artillery.rwutils.AnalyzeDataFactory
+import com.artillery.connect.manager.JW002BleManage
 import com.artillery.rwutils.cmd.BleConstantData
 import com.artillery.rwutils.exts.byte2Int
 import com.artillery.rwutils.exts.toBuffer
-import com.artillery.rwutils.model.Aggregate
-import com.artillery.rwutils.model.SDD
 import com.blankj.utilcode.util.ConvertUtils
-import com.blankj.utilcode.util.GsonUtils
 import com.blankj.utilcode.util.LogUtils
 import com.blankj.utilcode.util.ThreadUtils
 import com.blankj.utilcode.util.TimeUtils
 import com.blankj.utilcode.util.ToastUtils
 import com.blankj.utilcode.util.Utils
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import no.nordicsemi.android.ble.ktx.state.ConnectionState
-import no.nordicsemi.android.ble.ktx.stateAsFlow
 
 /**
  * @author : zhiweizhu
