@@ -1,0 +1,563 @@
+syntax="proto2";
+
+option java_package = "com.artillery.protobuf.model";
+option java_multiple_files = true;
+
+
+package com.artillery.protobuf.model;
+
+enum ver_t { 
+    PB_VERSION = 3;
+}
+
+message error_code_t {
+    required uint32 err = 1;
+}
+
+/*蓝牙连接参数*/
+message base_param_t {
+    required uint32 m_mtu = 1;
+    required uint32 m_fun1 = 2;
+    required uint32 m_fun2 = 3;
+    required uint32 m_pb_version = 4;
+    optional uint32 m_conn_inter = 5;
+    optional uint32 m_conn_timeout = 6;
+    optional uint32 m_latancy = 7;
+    optional uint32 m_is_bind = 8;
+}
+
+/*秘钥协商参数*/
+message key_consult_t {
+    required uint32 m_step = 1;
+    required bytes m_random = 2;
+    optional bytes m_pkey = 3;
+    optional uint32 m_err_code = 4;
+}
+
+/*用户信息*/
+message user_info_t {
+    required uint32 m_usrid = 1;
+    required uint32 m_gender = 2;
+    required uint32 m_age = 3;
+    required uint32 m_height = 4;
+    required uint32 m_weight = 5;
+    required uint32 m_wearstyle = 6;
+    optional bytes m_user_name = 7;
+}
+
+/*设备信息*/
+message device_info_t {
+    required bytes m_version = 1;
+    required bytes m_sn = 2;
+    required bytes m_mac = 3;
+}
+
+/*手机基本信息*/
+message phone_info_t {
+    required uint32 m_phonemodel = 1;
+    required uint32 m_systemversion = 2;
+    required uint32 m_appversion = 3;
+    required uint32 m_language = 4;
+}
+
+/*消息提醒类型设置*/
+message message_type_set_t {
+    required uint32 m_type = 1;
+}
+
+/*消息数据*/
+message message_info_t {
+    required uint32 m_type = 1;
+    required bytes m_title = 2;
+    required bytes m_msg = 3;
+}
+
+/*来电信息*/
+message phonecall_info_t {
+    required uint32 m_code = 1;
+    optional bytes m_number = 2;
+    optional bytes m_name = 3;
+}
+
+/*心率配置信息*/
+message hr_config_info_t {
+    required uint32 m_auto = 1;
+    required uint32 m_interval = 2;
+    required uint32 m_warming_upper = 3;
+    required uint32 m_warming_lower = 4;
+}
+
+/*心率测量值*/
+message hr_val_t {
+    required uint32 m_last = 1;
+    required uint32 m_last_timestamps = 2;
+    required uint32 m_last_detect_type = 3;
+    required uint32 m_today_max = 4;
+    required uint32 m_today_min = 5;
+}
+
+/*血氧配置信息*/
+message spo2_config_info_t {
+    required uint32 m_night_auto = 1;
+    required uint32 m_night_interval = 2;
+    required uint32 m_warming_upper = 3;
+    required uint32 m_warming_lower = 4;
+}
+
+/*血氧测量值*/
+message spo2_val_t {
+    required uint32 m_last = 1;
+    required uint32 m_last_timestamps = 2;
+    required uint32 m_last_detect_type = 3;
+    required uint32 m_today_max = 4;
+    required uint32 m_today_min = 5;
+}
+
+/*压力配置信息*/
+message stress_config_info_t {
+    required uint32 m_auto = 1;
+    required uint32 m_interval = 2;
+}
+
+/*压力测量值*/
+message stress_val_t {
+    required uint32 m_last = 1;
+    required uint32 m_last_timestamps = 2;
+    required uint32 m_last_detect_type = 3;
+    required uint32 m_today_max = 4;
+    required uint32 m_today_min = 5;
+}
+
+/*久坐信息*/
+message longsit_info_t {
+    required uint32 m_eable = 1;
+    required uint32 m_duration = 2;
+    
+    required uint32 m_start_hour = 3;
+    required uint32 m_start_minute = 4;
+    required uint32 m_end_hour = 5;
+    required uint32 m_end_minute = 6;
+    
+    required uint32 m_notdisturb_enable = 7;
+    required uint32 m_notdisturb_start_hour = 8;
+    required uint32 m_notdisturb_start_minute = 9;
+    required uint32 m_notdisturb_end_hour = 10;
+    required uint32 m_notdisturb_end_minute = 11;
+}
+
+/*勿扰信息*/
+message notdisturb_info_t {
+    required uint32 m_enable = 1;
+    required uint32 m_type = 2;
+    required uint32 m_start_hour = 3;
+    required uint32 m_start_minute = 4;
+    required uint32 m_end_hour = 5;
+    required uint32 m_end_minute = 6;
+}
+
+/*每个闹钟信息*/
+message alarm_clock_t {
+    required uint32 m_use = 1;            /*是否使用*/
+    required uint32 m_enable = 2;         /*是否打开*/
+    required uint32 m_type = 3;           /*闹钟类型(已作废, 无实际意义)*/
+    required uint32 m_repeat = 4;         /*重复*/
+    required uint32 m_hour = 5;       
+    required uint32 m_minute = 6;
+    required bytes m_remark = 7;
+}
+
+/*所有闹钟信息结构体*/
+message alarm_info_t {
+    required uint32 m_enable = 1;
+    repeated alarm_clock_t m_info = 2;
+}
+
+
+/*国家信息*/
+message country_info_t {
+    required bytes m_name = 1;
+    optional int32 m_timezone = 2;
+}
+
+/*日历时间信息*/
+message calendar_info_t {
+    required uint32 m_year = 1;
+    required uint32 m_month = 2;
+    required uint32 m_day = 3;
+    required uint32 m_hour = 4;
+    required uint32 m_minute = 5;
+    required uint32 m_second = 6;
+    required int32  m_time_zone = 8;
+}
+
+/*时间格式*/
+message time_fmt_t {
+    required uint32 m_fmt = 1;
+}
+
+/*控制码*/
+message ctrl_code_t {
+    required uint32 m_code = 1;
+}
+
+/*亮屏时长*/
+message bright_times_t {
+    required uint32 m_bright_time = 1;
+}
+
+/*每天运动信息*/
+message day_sport_info_t {
+    required uint32 m_step = 1;
+    required uint32 m_calories_kcal = 2;
+    required uint32 m_distance_m = 3;
+    required uint32 m_actime_sec = 4;
+    required uint32 m_act_count = 5;
+}
+
+/*电量信息*/
+message battery_info_t {
+    required uint32 m_percent = 1;  
+    optional uint32 m_voltage = 2;
+}
+
+/*每天天气信息*/
+message weather_day_info_t {
+    required uint32 m_climate = 1;
+    required int32  m_temperature = 2;
+    required int32  m_temperature_max = 3;
+    required int32  m_temperature_min = 4;
+    required uint32 m_pm25 = 5;
+    required uint32 m_aqi = 6;
+    required uint32 m_humidity = 7;
+    required uint32 m_uv = 8;
+}
+/*总的天气信息*/
+message weather_info_t {
+    required uint32 m_year = 1;
+    required uint32 m_month = 2;
+    required uint32 m_day = 3;
+    required bytes  m_city_name = 4;
+    repeated weather_day_info_t m_days_info = 5;
+}
+
+/*音乐上报信息*/
+message music_ctrl_info_t {
+    required uint32 m_code = 1;
+    optional uint32 m_volume = 2;
+}
+
+/*音乐信息*/
+message music_info_t {
+    required uint32 m_code = 1;
+    required uint32 m_volume = 2;
+    
+    required bytes m_title = 3;
+    required bytes m_words = 4;
+    
+    optional uint32 m_duration_ms = 5;
+    optional uint32 m_elapsed_ms = 6;
+}
+
+/*设置菜单序列*/
+message menu_sequence_info_t {
+    required uint32 m_type = 1;
+    required bytes m_data = 2;
+    
+    optional uint32 m_support_count = 3;
+    optional uint32 m_support = 4;
+}
+
+/*日志信息*/
+message log_info_t {
+    required uint32 m_length = 1;
+    required uint32 m_sn = 2;
+    required bytes m_data = 3;
+}
+
+/*表盘配置信息*/
+message dial_config_data_t {
+    required uint32 m_id = 1;
+    required uint32 m_width = 2;
+    required uint32 m_height = 3;
+    required uint32 m_form = 4;
+    required bytes m_name = 5;
+}
+
+/*历史健康请求包参数*/
+message health_history_request_t {
+    required uint32 m_year = 1;
+    required uint32 m_month = 2;
+    required uint32 m_day = 3;
+    required uint32 m_type = 4;
+}
+
+/*历史数据返回包参数*/
+message health_history_response_t {
+    required uint32 m_year = 1;
+    required uint32 m_month = 2;
+    required uint32 m_day = 3;
+    required uint32 m_type = 4;
+    required bytes m_data = 5;
+}
+
+/*多运动控制指令*/
+message mul_sport_ctrl_param_t {
+    required uint32 m_mode = 1;
+    required uint32 m_status = 2;
+    required uint32 m_duration = 3;
+    optional uint32 m_hrval = 4;
+    optional uint32 m_step = 5;
+    optional uint32 m_calories_cal = 6;
+    optional uint32 m_distance_m = 7;
+    optional uint32 m_speed_10m_h = 8;
+    optional uint32 m_space_s_km = 9;
+    optional uint32 m_avg_speed_10m_h = 10;
+    optional uint32 m_avg_space_s_km = 11;
+    optional float m_longitude = 12;
+    optional float m_latitude = 13;
+}
+
+/*运动记录摘要*/
+message sport_abstract_t {
+    required uint32 m_timestamps = 1;
+}
+
+message mul_sport_abstract_t {
+    repeated sport_abstract_t m_abstract = 1;
+}
+
+/*运动记录*/
+message mul_sport_record_t {
+    required uint32 m_sn = 1;
+    required uint32 m_timestamps = 2;
+    required uint32 m_mode = 3;
+    required uint32 m_step = 4;
+    required uint32 m_calories = 5;
+    required uint32 m_distance = 6;
+    required uint32 m_duration = 7;
+    required uint32 m_avg_hrval = 8;
+    required uint32 m_max_hrval = 9;
+    required uint32 m_min_hrval = 10;
+    required bytes m_hr_status = 11;
+    required uint32 m_avg_speed_10m_h = 12;
+    required uint32 m_avg_space_s_km = 13;
+    required uint32 m_avg_step_freq = 14;
+    required uint32 m_target_typ = 15;
+    required uint32 m_target_val = 16;
+    required uint32 m_interval = 17;
+    required uint32 m_data_fmt = 18;
+    required uint32 m_data_len = 19;
+    required bytes m_data = 20;
+}
+
+/*每条待办事项*/
+message todolists_t {
+    required uint32 m_timestamps = 1;
+    required uint32 m_create_timestamps = 2;
+    required uint32 m_type = 3;
+    required uint32 m_year = 4;
+    required uint32 m_month = 5;
+    required uint32 m_day = 6;
+    required uint32 m_hour = 7;
+    required uint32 m_minute = 8;
+    required uint32 m_repeat_type = 9;
+    required uint32 m_repeat_data = 10;
+    required bytes  m_title = 11;
+    required bytes  m_content = 12;
+}
+
+/*设置待办事项*/
+message set_todolists_t {
+    required uint32 m_operate = 1;
+    required uint32 m_sn = 2;
+    required uint32 m_count = 3;
+    repeated todolists_t m_info = 4;
+}
+
+/*获取待办事项*/
+message todolists_request_t {
+    required uint32 m_type = 1;
+    required uint32 m_index = 2;
+}
+
+/*返回待办事项*/
+message todolists_response_t {
+    required uint32 m_count = 1;
+    required uint32 m_sn = 2;
+    repeated todolists_t m_info = 3;
+}
+
+/*文件信息*/
+message file_info_t {
+    required uint32 m_file_id = 1;
+    required uint32 m_file_size = 2;
+    required bytes m_file_name = 3;
+}
+
+/*文件数据请求参数*/
+message file_data_request_t {
+    required uint32 m_file_id = 1;
+    required uint32 m_offset = 2;
+    required uint32 m_data_len = 3;
+}
+
+/*文件数据*/
+message file_data_t {
+    required uint32 m_file_id = 1;
+    required uint32 m_offset = 2;
+    required bytes m_data = 3;
+}
+
+/*文件结果*/
+message file_result_t {
+    required uint32 m_file_id = 1;
+    required uint32 m_code = 2;
+}
+
+/*通信录结构体*/
+message contacts_info_t {
+    required uint32 m_serials = 1;
+    required bytes m_name = 2;
+    required bytes m_number = 3;
+}
+
+/*获取所有通信录信息*/
+message contacts_all_info_t {
+    repeated contacts_info_t m_contacts = 1;
+}
+
+/*设置指定通信录信息*/
+message contacts_info_set_t {
+    required uint32 m_operate = 1;
+    required uint32 m_serials = 2;
+    optional bytes m_name = 3;
+    optional bytes m_number = 4;
+}
+
+
+//////////////////////////////////////////////////////////////////////
+message watch_cmds {
+    enum cmd_t { 
+        CMD_GET_BASE_PARAM                  = 1;
+        CMD_KEY_CONSULT                     = 2;
+        CMD_BIND_DEVICE                     = 3;
+        CMD_GET_DEVICE_INFO                 = 4;
+        CMD_SET_PHONE_INFO                  = 5;
+        CMD_SET_MESSAGE_SWITCH              = 6;
+        CMD_SET_MESSAGE_DATA                = 7;
+        CMD_GET_HR_CONFIG                   = 8;
+        CMD_SET_HR_CONFIG                   = 9;
+        CMD_SYNC_HR_DETECT_VAL              = 10;
+        CMD_GET_SPO2_CONFIG                 = 11;
+        CMD_SET_SPO2_CONFIG                 = 12;
+        CMD_SYNC_SPO2_DETECT_VAL            = 13;
+        CMD_GET_STRESS_CONFIG               = 14;
+        CMD_SET_STRESS_CONFIG               = 15;
+        CMD_SYNC_STRESS_DETECT_VAL          = 16;
+        CMD_GET_LONG_SIT_CONFIG             = 17;
+        CMD_SET_LONG_SIT_CONFIG             = 18;
+        CMD_GET_NOTDISTURB_CONFIG           = 19;
+        CMD_SET_NOTDISTURB_CONFIG           = 20;
+        CMD_SYNC_CLOCK_ALARM_CONFIG         = 21;
+        CMD_SET_CLOCK_ALARM_CONFIG          = 22;
+        CMD_SYNC_DRINK_ALARM_CONFIG         = 23;
+        CMD_SET_DRINK_ALARM_CONFIG          = 24;
+        CMD_SYNC_MEDI_ALARM_CONFIG          = 25;
+        CMD_SET_MEDI_ALARM_CONFIG           = 26;
+        CMD_SET_COUNTRY_INFO                = 27;
+        CMD_SET_TIME_INFO                   = 28;
+        CMD_SET_TIME_FMT                    = 29;
+        CMD_SET_METRIC_INCH                 = 30;
+        CMD_SET_BRIGHT_DURATION             = 31;
+        CMD_SET_MENU_STYLE                  = 32;
+        CMD_SYNC_MENU_STYLE                 = 33;
+        CMD_SYNC_DAY_SPORT_TARGET           = 34;
+        CMD_SET_DAY_SPORT_TARGET            = 35;
+        CMD_SYNC_ACTUAL_STEP_INFO           = 36;
+        CMD_SYNC_BATTERY_INFO               = 37;
+        CMD_RING_WATCH_CTRL                 = 38;
+        CMD_RING_PHONE_CTRL                 = 39;
+        CMD_CTRL_PHONE_TAKE_PICTURE         = 40;
+        CMD_SET_WEATHER_INFO                = 41;
+        CMD_MUSIC_CTRL                      = 42;
+        CMD_PHONE_MUSIC_INFO_UPDATE         = 43;
+        CMD_SET_DEVICE_MODE                 = 44;
+        CMD_PHONE_CALL_CTRL                 = 45;
+        CMD_GET_MENU_SEQUENCE_DATA          = 46;
+        CMD_SET_MENU_SEQUENCE_DATA          = 47;
+        CMD_SET_TODOLISTS_INFO              = 48;
+        CMD_GET_TODOLISTS_INFO              = 49;
+        CMD_PHONE_APP_SET_STATUS            = 50;
+        CMD_SET_WATCH_EVENT                 = 51;
+        CMD_SET_LOG_INFO_DATA               = 52;
+        CMD_GET_LOG_INFO_DATA               = 53;
+        CMD_SYNC_DIAL_CONFIG_DATA           = 54;
+        CMD_GET_HEALTH_DATA                 = 55;
+        
+        CMD_GET_MUL_SPORT_IS_RUNNING        = 56;
+        CMD_SET_MUL_SPORT_STATUS            = 57;
+        CMD_GET_MUL_SPORT_RECORD_ABSTRACT   = 58;
+        CMD_GET_MUL_SPORT_RECORD_DATA       = 59;
+        
+        CMD_UPDATE_FILE_NOTIFY              = 61;
+        CDM_UPDATE_FILE_DATA_REQUEST        = 62;
+        CMD_UPDATE_FILE_RESULT_NOTIFY       = 63;
+        
+        CMD_CONTACTS_GET                    = 64;
+        CMD_CONTACTS_SET                    = 65;
+        CMD_CONTACTS_SYNC                   = 66;
+    }
+    required cmd_t                          cmd = 1;
+    required bool                           response = 2;
+    required uint32                         seconds = 3;  
+    required int32                          timezone = 4; 
+    
+    optional error_code_t                   err_code = 5;
+    optional base_param_t                   base_param = 6;
+    optional key_consult_t                  key_consult = 7;
+    optional user_info_t                    user_info = 8;
+    optional device_info_t                  dev_info = 9;
+    optional phone_info_t                   phone_info = 10;
+    optional message_type_set_t             msg_type = 11;
+    optional message_info_t                 msg_data = 12;
+    optional hr_config_info_t               hr_config = 13;
+    optional hr_val_t                       hr_val = 14;
+    optional spo2_config_info_t             spo2_config = 15;
+    optional spo2_val_t                     spo2_val = 16;
+    optional stress_config_info_t           stress_config = 17;
+    optional stress_val_t                   stress_val = 18;
+    optional longsit_info_t                 longsit_info = 19;
+    optional notdisturb_info_t              notdisturb_info = 20;
+    optional alarm_info_t                   alarm_info = 21;
+    optional country_info_t                 country_info = 22;
+    optional calendar_info_t                calendar_info = 23;
+    optional time_fmt_t                     time_fmt = 24;
+    optional ctrl_code_t                    ctrl_code = 25;
+    optional bright_times_t                 bright_times = 26;
+    optional day_sport_info_t               day_sport_info = 27;
+    optional battery_info_t                 battery_info = 28;
+    optional weather_info_t                 weather_info = 29;
+    optional music_info_t                   music_info = 30;
+    optional menu_sequence_info_t           menu_sequence_info = 31;
+    optional log_info_t                     log_info = 32;
+    optional dial_config_data_t             dial_config = 33;
+    optional health_history_request_t       history_request = 34;
+    optional health_history_response_t      history_response = 35;
+    optional mul_sport_ctrl_param_t         mul_sport_param = 36;
+    optional mul_sport_record_t             mul_sport_record = 37;
+    optional set_todolists_t                set_todolists = 38;
+    optional todolists_request_t            todolists_request = 39;
+    optional todolists_response_t           todolists_response = 40;
+    optional file_info_t                    file_info = 41;
+    optional file_data_request_t            file_requst_param = 42;
+    optional file_data_t                    file_data = 43;
+    optional file_result_t                  file_result = 44;
+    optional mul_sport_abstract_t           mul_sport_abstract = 45;
+    optional contacts_info_t                contacts_info = 46;
+    optional contacts_all_info_t            all_contacts_info = 47;
+    optional contacts_info_set_t            contacts_info_set = 48;
+    optional music_ctrl_info_t              music_ctrl_info = 49;
+    optional phonecall_info_t               phonecall_info = 50;	
+}
+
+
