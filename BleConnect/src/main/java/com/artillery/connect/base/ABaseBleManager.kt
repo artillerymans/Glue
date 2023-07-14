@@ -82,11 +82,10 @@ abstract class ABaseBleManager(context: Context = Utils.getApp()): BleManager(co
         type: Int = WRITE,
         @WriteType writeType: Int = BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE
     ){
-        var indexRetry = 0
+        var indexRetry = -1
         bytes.forEachIndexed{ index, data ->
             try {
                 val tempData = suspendCancellableCoroutine { continuation ->
-                    indexRetry = index
                     writeCharacteristic(
                         onGetCharacteristic(type),
                         data,
@@ -94,6 +93,7 @@ abstract class ABaseBleManager(context: Context = Utils.getApp()): BleManager(co
                     ).done {
                         continuation.resumeWith(Result.success(data))
                     }.fail { device, status ->
+                        indexRetry = index
                         continuation.resumeWith(Result.failure(Exception("写入数据失败，状态码 ->$status")))
                     }.enqueue()
                 }
@@ -109,7 +109,7 @@ abstract class ABaseBleManager(context: Context = Utils.getApp()): BleManager(co
             }
         }
 
-        if (indexRetry != 0){
+        if (indexRetry != -1){
             val tempBytes = bytes.subList(indexRetry, bytes.size)
             if (tempBytes.isNotEmpty()){
                 post(

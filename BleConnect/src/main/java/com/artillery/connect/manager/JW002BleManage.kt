@@ -14,6 +14,7 @@ import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import no.nordicsemi.android.ble.MtuRequest
 import no.nordicsemi.android.ble.ktx.state.ConnectionState
 import no.nordicsemi.android.ble.ktx.stateAsFlow
 import java.util.UUID
@@ -129,7 +130,6 @@ class JW002BleManage {
     }
 
 
-
     fun getBleState(): ConnectionState {
         return _connectStatusFlow.value
     }
@@ -138,7 +138,17 @@ class JW002BleManage {
         return mJW002Manage?.isConnected ?: false
     }
 
+    fun setMtuSize(size: Int){
+        mJW002Manage?.setMtuSize(size)
+    }
 
+    fun getMtuSize(): Int{
+        return mJW002Manage?.getMtuSize() ?: 0
+    }
+
+    /**
+     * 断开后调用这个函数
+     */
     fun clear() {
         mJW002Manage?.run {
             disconnect().enqueue()
@@ -156,6 +166,8 @@ class JW002BleManage {
         private var mNotifyCharacteristic: BluetoothGattCharacteristic? = null
         private var mNotifyAckCharacteristic: BluetoothGattCharacteristic? = null
 
+        private var mMtuSize: Int = 23;
+
         init {
             mDefaultScope.launch {
                 stateAsFlow().collect {
@@ -166,6 +178,20 @@ class JW002BleManage {
                     }
                 }
             }
+        }
+
+        fun setMtuSize(size: Int){
+            requestMtu(size)
+                .done {
+                    mMtuSize = size
+                    LogUtils.d("initialize: requestMtu size $mMtuSize")
+                }.fail { device, status ->
+                    LogUtils.d("setMtuSize: fail")
+                }.enqueue()
+        }
+
+        fun getMtuSize(): Int{
+            return mMtuSize
         }
 
 
@@ -190,10 +216,8 @@ class JW002BleManage {
 
         override fun initialize() {
             super.initialize()
-            requestMtu(23)
-                .done {
-                    LogUtils.d("initialize: requestMtu size 23")
-                }.enqueue()
+
+            setMtuSize(mMtuSize)
 
             setNotificationCallback(mNotifyCharacteristic)
                 .with { device, data ->

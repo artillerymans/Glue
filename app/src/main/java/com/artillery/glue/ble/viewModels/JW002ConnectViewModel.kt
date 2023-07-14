@@ -15,10 +15,15 @@ import com.artillery.connect.manager.BleDeviceManager
 import com.artillery.glue.model.DebugBaseItem
 import com.artillery.glue.model.DebugDataType
 import com.artillery.connect.manager.JW002BleManage
+import com.artillery.protobuf.FactoryProto
+import com.artillery.protobuf.model.watch_cmds
+import com.artillery.protobuf.utils.crcJW002
 import com.artillery.rwutils.cmd.BleConstantData
+import com.artillery.rwutils.crc.crc
 import com.artillery.rwutils.exts.byte2Int
 import com.artillery.rwutils.exts.toBuffer
 import com.blankj.utilcode.util.ConvertUtils
+import com.blankj.utilcode.util.GsonUtils
 import com.blankj.utilcode.util.LogUtils
 import com.blankj.utilcode.util.ThreadUtils
 import com.blankj.utilcode.util.TimeUtils
@@ -29,6 +34,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import no.nordicsemi.android.ble.ktx.state.ConnectionState
+import java.nio.ByteOrder
 
 /**
  * @author : zhiweizhu
@@ -121,6 +127,9 @@ class JW002ConnectViewModel: ViewModel() {
     }
 
     fun connect(device: BluetoothDevice) {
+
+        JW002BleManage.getInstance().setBleNotifyDataChannel(mBleDataChangeChannel)
+
         if (!JW002BleManage.getInstance().isConnect()){
             viewModelScope.launch {
                 JW002BleManage.getInstance().connectStateFlow().collect { state ->
@@ -156,7 +165,8 @@ class JW002ConnectViewModel: ViewModel() {
             for (value in mBleDataChangeChannel) {
                 ThreadUtils.getMainHandler().run {
                     //蓝牙回来的数据
-                    LogUtils.d("接收到数据 => ${ConvertUtils.bytes2HexString(value.second)}")
+                    LogUtils.d("接收到数据 => ${ConvertUtils.bytes2HexString(value.second.toBuffer(
+                        ByteOrder.LITTLE_ENDIAN).array())}")
                     noticeRefreshUI(
                         listOf(value.second),
                         if (value.first == JW002BleManage.NotifyACK)
@@ -191,7 +201,12 @@ class JW002ConnectViewModel: ViewModel() {
     }
 
     fun pack(pair: Pair<Int, ByteArray>) {
-        val buffer = pair.second.toBuffer()
+        val buffer = pair.second.toBuffer(ByteOrder.LITTLE_ENDIAN)
+        //包头
+        val head = buffer.short.toUShort().toString(16)
+        LogUtils.d("pack: head = $head")
+
+
 
     }
 
@@ -207,15 +222,71 @@ class JW002ConnectViewModel: ViewModel() {
             0,
             bytes.mapIndexed { index, values ->
                 val date = TimeUtils.getNowDate()
+
                 val hexCmd = values[0].byte2Int().toString(16)
-                DebugBaseItem.DebugItem(
-                    type,
-                    TimeUtils.date2String(date, TimeUtils.getSafeDateFormat("MM-dd HH:mm:ss SSS")),
-                    values,
-                    ConvertUtils.bytes2HexString(values),
-                    index,
-                    hexCmd
-                )
+
+                if (type == DebugDataType.notice){
+                    val buffer = values.toBuffer(ByteOrder.LITTLE_ENDIAN)
+                    val header = buffer.short.toUShort().toString(16)
+                    val dataLength = buffer.short.toUShort()
+                    val dataCrc = buffer.short.toUShort()
+                    val tempBytes = ByteArray(buffer.remaining())
+                    buffer.get(tempBytes)
+
+                    val tempCrc = tempBytes.crcJW002()
+                    LogUtils.d("noticeRefreshUI: dataLength = $dataLength , dataCrc = $dataCrc,  tempCrc = $tempCrc")
+                    LogUtils.d("noticeRefreshUI: crc 是否相等 -> ${dataCrc == tempCrc}")
+
+                    LogUtils.d("noticeRefreshUI: $header,    ${ConvertUtils.bytes2HexString(tempBytes)}")
+                    val watchCmds = watch_cmds.parseFrom(tempBytes)
+
+
+                    DebugBaseItem.DebugItem(
+                        type,
+                        TimeUtils.date2String(date, TimeUtils.getSafeDateFormat("MM-dd HH:mm:ss SSS")),
+                        values,
+                        GsonUtils.toJson(watchCmds),
+                        index,
+                        watchCmds.cmd.name
+                    )
+
+                }else if (type == DebugDataType.write){
+
+                    val buffer = values.toBuffer(ByteOrder.LITTLE_ENDIAN)
+                    val header = buffer.short.toUShort().toString(16)
+                    val dataLength = buffer.short.toUShort()
+                    val dataCrc = buffer.short.toUShort()
+                    val tempBytes = ByteArray(buffer.remaining())
+                    buffer.get(tempBytes)
+
+                    val tempCrc = tempBytes.crcJW002()
+                    LogUtils.d("noticeRefreshUI: dataLength = $dataLength , dataCrc = $dataCrc,  tempCrc = $tempCrc")
+                    LogUtils.d("noticeRefreshUI: crc 是否相等 -> ${dataCrc == tempCrc}")
+
+                    LogUtils.d("noticeRefreshUI: $header,    ${ConvertUtils.bytes2HexString(tempBytes)}")
+                    val watchCmds = watch_cmds.parseFrom(tempBytes)
+
+                    DebugBaseItem.DebugItem(
+                        type,
+                        TimeUtils.date2String(date, TimeUtils.getSafeDateFormat("MM-dd HH:mm:ss SSS")),
+                        values,
+                        GsonUtils.toJson(watchCmds),
+                        index,
+                        watchCmds.cmd.name
+                    )
+                }else {
+                    DebugBaseItem.DebugItem(
+                        type,
+                        TimeUtils.date2String(date, TimeUtils.getSafeDateFormat("MM-dd HH:mm:ss SSS")),
+                        values,
+                        ConvertUtils.bytes2HexString(values),
+                        index,
+                        hexCmd
+                    )
+                }
+
+
+
             }.toList()
         )
         _readWriteListFlow.value = list

@@ -5,6 +5,7 @@ import android.graphics.Matrix
 import com.artillery.rwutils.type.SwitchType
 import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
+import java.nio.ByteOrder
 
 
 /**
@@ -47,8 +48,10 @@ fun Int.toBytesLowerThree(): ByteArray{
     return dst
 }
 
-fun ByteArray.toBuffer(): ByteBuffer{
-    return ByteBuffer.wrap(this)
+fun ByteArray.toBuffer(byteOrder: ByteOrder = ByteOrder.BIG_ENDIAN): ByteBuffer{
+    return ByteBuffer.wrap(this).apply {
+        order(byteOrder)
+    }
 }
 
 fun zeroByte(): Byte{
