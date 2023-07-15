@@ -29,15 +29,18 @@ class JW002BleManage {
     private var mJW002Manage: JW002Manage? = null
 
 
-
     companion object {
 
         private const val FilterUUID: String = "0000fee7-0000-1000-8000-00805f9b34fb"
         private const val ServiceSCServiceUUIDMain: String = "000001ff-0000-0100-8000-00807c5634fb"
-        private const val ServiceSCCharacteristicsWrite: String = "000002ff-0000-0100-8000-00807c5634fb"
-        private const val ServiceSCCharacteristicsNotify: String = "000003ff-0000-0100-8000-00807c5634fb"
-        private const val ServiceSCACKCharacteristicsWrite: String = "000004ff-0000-0100-8000-00807c5634fb"
-        private const val ServiceSCACKCharacteristicsNotify: String = "000005ff-0000-0100-8000-00807c5634fb"
+        private const val ServiceSCCharacteristicsWrite: String =
+            "000002ff-0000-0100-8000-00807c5634fb"
+        private const val ServiceSCCharacteristicsNotify: String =
+            "000003ff-0000-0100-8000-00807c5634fb"
+        private const val ServiceSCACKCharacteristicsWrite: String =
+            "000004ff-0000-0100-8000-00807c5634fb"
+        private const val ServiceSCACKCharacteristicsNotify: String =
+            "000005ff-0000-0100-8000-00807c5634fb"
 
         const val WriteACK = 100
         const val NotifyACK = 101
@@ -57,7 +60,7 @@ class JW002BleManage {
         mJW002Manage?.connectByBluetoothDevice(device)
     }
 
-    fun disConnect(device: BluetoothDevice){
+    fun disConnect(device: BluetoothDevice) {
         mJW002Manage?.let { manage ->
             manage.disconnect()
                 .done {
@@ -84,40 +87,41 @@ class JW002BleManage {
 
     private var mNotificationCharacteristicChannel: SendChannel<Pair<Int, ByteArray>>? = null
 
-    fun setBleNotifyDataChannel(channel: Channel<Pair<Int, ByteArray>>){
+    fun setBleNotifyDataChannel(channel: Channel<Pair<Int, ByteArray>>) {
         mNotificationCharacteristicChannel = channel
     }
 
 
-    private val mBleDataChangeList: ArraySet<IDataChangeListening> by lazy(LazyThreadSafetyMode.NONE){
+    private val mBleDataChangeList: ArraySet<IDataChangeListening> by lazy(LazyThreadSafetyMode.NONE) {
         ArraySet()
     }
 
 
-    fun registerBleDataChangeListening(call: IDataChangeListening){
+    fun registerBleDataChangeListening(call: IDataChangeListening) {
         mBleDataChangeList.add(call)
     }
 
-    fun unregisterBleDataChangeListening(call: IDataChangeListening){
+    fun unregisterBleDataChangeListening(call: IDataChangeListening) {
         mBleDataChangeList.remove(call)
     }
 
     /**
      * 蓝牙连接状态流
      */
-    private val _connectStatusFlow = MutableStateFlow<ConnectionState>(ConnectionState.Disconnected(ConnectionState.Disconnected.Reason.UNKNOWN))
+    private val _connectStatusFlow =
+        MutableStateFlow<ConnectionState>(ConnectionState.Disconnected(ConnectionState.Disconnected.Reason.UNKNOWN))
     private val mConnectStatusFlow: StateFlow<ConnectionState> = _connectStatusFlow
 
-    private val mConnectStatusList: ArraySet<IConnectListening> by lazy(LazyThreadSafetyMode.NONE){
+    private val mConnectStatusList: ArraySet<IConnectListening> by lazy(LazyThreadSafetyMode.NONE) {
         ArraySet()
     }
 
 
-    fun registerConnectListening(call: IConnectListening){
+    fun registerConnectListening(call: IConnectListening) {
         mConnectStatusList.add(call)
     }
 
-    fun unregisterConnectListening(call: IConnectListening){
+    fun unregisterConnectListening(call: IConnectListening) {
         mConnectStatusList.remove(call)
     }
 
@@ -125,7 +129,7 @@ class JW002BleManage {
     /**
      * 通过这个流可以观察到状态
      */
-    fun connectStateFlow(): StateFlow<ConnectionState>{
+    fun connectStateFlow(): StateFlow<ConnectionState> {
         return mConnectStatusFlow
     }
 
@@ -138,11 +142,13 @@ class JW002BleManage {
         return mJW002Manage?.isConnected ?: false
     }
 
-    fun setMtuSize(size: Int){
-        mJW002Manage?.setMtuSize(size)
+    fun setMtuSize(size: Int,
+                   onFail: () -> Unit = {},
+                   onSuccess: (Int) -> Unit = {}) {
+        mJW002Manage?.setMtuSize(size, onFail, onSuccess)
     }
 
-    fun getMtuSize(): Int{
+    fun getMtuSize(): Int {
         return mJW002Manage?.getMtuSize() ?: 0
     }
 
@@ -154,7 +160,8 @@ class JW002BleManage {
             disconnect().enqueue()
             close()
         }
-        _connectStatusFlow.value = ConnectionState.Disconnected(ConnectionState.Disconnected.Reason.UNKNOWN)
+        _connectStatusFlow.value =
+            ConnectionState.Disconnected(ConnectionState.Disconnected.Reason.UNKNOWN)
         mJW002Manage = null
     }
 
@@ -180,17 +187,22 @@ class JW002BleManage {
             }
         }
 
-        fun setMtuSize(size: Int){
+        fun setMtuSize(size: Int,
+                       onFail: () -> Unit = {},
+                       onSuccess: (Int) -> Unit = {}
+        ) {
             requestMtu(size)
                 .done {
                     mMtuSize = size
-                    LogUtils.d("initialize: requestMtu size $mMtuSize")
+                    onSuccess.invoke(size)
+                    LogUtils.d("setMtuSize: requestMtu size $mMtuSize")
                 }.fail { device, status ->
                     LogUtils.d("setMtuSize: fail")
+                    onFail.invoke()
                 }.enqueue()
         }
 
-        fun getMtuSize(): Int{
+        fun getMtuSize(): Int {
             return mMtuSize
         }
 
@@ -308,16 +320,16 @@ class JW002BleManage {
         }
 
 
-        private fun bindDevice(){
+        private fun bindDevice() {
             /*是否发起绑定*/
             try {
                 bluetoothDevice?.let {
-                    if (it.bondState == BluetoothDevice.BOND_NONE){
+                    if (it.bondState == BluetoothDevice.BOND_NONE) {
                         //发起配对
                         bluetoothDevice?.createBond()
                     }
                 }
-            }catch (e: Exception){
+            } catch (e: Exception) {
                 e.printStackTrace()
             }
         }

@@ -27,12 +27,14 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.artillery.connect.base.ABaseBleManager
+import com.artillery.connect.manager.JW002BleManage
 import com.artillery.glue.ble.UnitRowLayout
 import com.artillery.glue.ble.viewModels.JW002ConnectViewModel
 import com.artillery.glue.model.DebugBaseItem
 import com.artillery.glue.model.DebugDataType
 import com.artillery.glue.ui.NavConstant
-import com.artillery.protobuf.FactoryProto
+import com.artillery.protobuf.ProtoBufHelper
 
 /**
  * @author : zhiweizhu
@@ -48,13 +50,15 @@ fun JW002Compose(navController: NavController, viewModel: JW002ConnectViewModel)
 
     val scope = rememberCoroutineScope()
 
-    fun writeBytes(bytes: ByteArray) {
-        viewModel.writeByteArray(bytes)
+    fun writeBytes(bytes: ByteArray, characteristicType: Int = ABaseBleManager.WRITE) {
+        viewModel.writeByteArray(bytes,characteristicType)
     }
 
-    fun writeListBytes(list: List<ByteArray>) {
-        viewModel.writeByteArrays(list)
+    fun writeListBytes(list: List<ByteArray>, characteristicType: Int = ABaseBleManager.WRITE) {
+        viewModel.writeByteArrays(list, characteristicType)
     }
+
+
 
     Column(
         modifier = Modifier
@@ -78,12 +82,13 @@ fun JW002Compose(navController: NavController, viewModel: JW002ConnectViewModel)
             }
         )
         UnitRowLayout(
-            "获取信息",
-            "-----",
+            "获取基本信息",
+            "获取设备信息",
             onFirstClick = {
-                viewModel.writeByteArrays(FactoryProto().createBytes())
+                writeListBytes(ProtoBufHelper.getInstance().sendCMD_GET_BASE_PARAM())
             },
             onSecondClick = {
+                writeListBytes(ProtoBufHelper.getInstance().sendCMD_GET_DEVICE_INFO(), JW002BleManage.WriteACK)
             }
         )
 

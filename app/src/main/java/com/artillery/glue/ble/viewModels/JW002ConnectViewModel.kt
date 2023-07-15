@@ -11,11 +11,12 @@ import android.content.pm.PackageManager
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.artillery.connect.base.ABaseBleManager
 import com.artillery.connect.manager.BleDeviceManager
 import com.artillery.glue.model.DebugBaseItem
 import com.artillery.glue.model.DebugDataType
 import com.artillery.connect.manager.JW002BleManage
-import com.artillery.protobuf.FactoryProto
+import com.artillery.protobuf.ProtoBufHelper
 import com.artillery.protobuf.model.watch_cmds
 import com.artillery.protobuf.utils.crcJW002
 import com.artillery.rwutils.cmd.BleConstantData
@@ -144,17 +145,17 @@ class JW002ConnectViewModel: ViewModel() {
     /**
      * 写入数据
      */
-    fun writeByteArray(bytes: ByteArray) {
-        writeByteArrays(listOf(bytes))
+    fun writeByteArray(bytes: ByteArray, characteristicType: Int = ABaseBleManager.WRITE) {
+        writeByteArrays(listOf(bytes), characteristicType)
     }
 
     /**
      * 写入List ByteArray
      */
-    fun writeByteArrays(bytes: List<ByteArray>) {
+    fun writeByteArrays(bytes: List<ByteArray>, characteristicType: Int = ABaseBleManager.WRITE) {
         JW002BleManage.getInstance().also {
             noticeRefreshUI(bytes, DebugDataType.write)
-            it.post(bytes)
+            it.post(bytes, characteristicType)
         }
     }
 
@@ -201,11 +202,38 @@ class JW002ConnectViewModel: ViewModel() {
     }
 
     fun pack(pair: Pair<Int, ByteArray>) {
-        val buffer = pair.second.toBuffer(ByteOrder.LITTLE_ENDIAN)
-        //包头
-        val head = buffer.short.toUShort().toString(16)
-        LogUtils.d("pack: head = $head")
+        ProtoBufHelper.getInstance().receive(pair.second){ value ->
+            when(val cmd = value.cmd){
 
+                watch_cmds.cmd_t.CMD_GET_BASE_PARAM -> {  // 获取基本信息
+                    value.baseParam?.let { baseParamT ->
+                        LogUtils.d("pack: baseParamT -> ${GsonUtils.toJson(baseParamT)}")
+                        val mtuSize = baseParamT.mMtu
+                        JW002BleManage.getInstance().setMtuSize(mtuSize){ number ->
+                            LogUtils.d("pack: 设置组包中的mut大小 -> $number")
+                            //蓝牙设置mtu成功进行设置组包中的mtu大小
+                            ProtoBufHelper.getInstance().setMtuSize(number)
+                        }
+                        //未绑定
+                        if (baseParamT.mIsBind == 0){
+                            writeByteArrays(
+                                ProtoBufHelper.getInstance().sendCMD_BIND_DEVICE(),
+                                JW002BleManage.WriteACK
+                            )
+                        }
+
+                    }
+                }
+                watch_cmds.cmd_t.CMD_GET_DEVICE_INFO -> {  //获取设备信息
+                    value.devInfo?.let { deviceInfo ->
+                        LogUtils.d("pack: ${GsonUtils.toJson(deviceInfo)}")
+                    }
+                }
+                else -> {
+                    LogUtils.d("pack: 未知命令 -> ${cmd.name}")
+                }
+            }
+        }
 
 
     }
@@ -232,12 +260,7 @@ class JW002ConnectViewModel: ViewModel() {
                     val dataCrc = buffer.short.toUShort()
                     val tempBytes = ByteArray(buffer.remaining())
                     buffer.get(tempBytes)
-
                     val tempCrc = tempBytes.crcJW002()
-                    LogUtils.d("noticeRefreshUI: dataLength = $dataLength , dataCrc = $dataCrc,  tempCrc = $tempCrc")
-                    LogUtils.d("noticeRefreshUI: crc 是否相等 -> ${dataCrc == tempCrc}")
-
-                    LogUtils.d("noticeRefreshUI: $header,    ${ConvertUtils.bytes2HexString(tempBytes)}")
                     val watchCmds = watch_cmds.parseFrom(tempBytes)
 
 

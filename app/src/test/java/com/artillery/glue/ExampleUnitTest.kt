@@ -3,6 +3,7 @@ package com.artillery.glue
 import org.junit.Test
 
 import org.junit.Assert.*
+import java.util.TimeZone
 
 /**
  * Example local unit test, which will execute on the development machine (host).
@@ -12,6 +13,9 @@ import org.junit.Assert.*
 class ExampleUnitTest {
     @Test
     fun addition_isCorrect() {
-        assertEquals(4, 2 + 2)
+        val defaultTimeZone = TimeZone.getDefault()
+        val rawOffsetMillis = defaultTimeZone.rawOffset
+        val rawOffsetHours = rawOffsetMillis / (1000 * 60 * 60)
+        println(rawOffsetHours)
     }
 }
