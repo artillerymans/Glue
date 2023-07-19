@@ -495,7 +495,7 @@ class ProtoBufHelper private constructor() {
      */
     fun createAlarm(
         user: Int,
-        enable: Int,
+        enable: SwitchType,
         type: Int,
         repeat: Int,
         hour: Int,
@@ -504,7 +504,7 @@ class ProtoBufHelper private constructor() {
     ): alarm_clock_t {
         return alarm_clock_t.newBuilder()
             .setMUse(user)
-            .setMEnable(enable)
+            .setMEnable(enable.value)
             .setMType(type)
             .setMRepeat(repeat)
             .setMHour(hour)
@@ -544,14 +544,15 @@ class ProtoBufHelper private constructor() {
     /**
      * 设置喝水闹钟信息
      */
-    fun sendCMD_SET_DRINK_ALARM_CONFIG(list: List<alarm_clock_t>): List<ByteArray> {
+    fun sendCMD_SET_DRINK_ALARM_CONFIG(enable: SwitchType,list: List<alarm_clock_t>): List<ByteArray> {
         return createBase {
             cmd = cmd_t.CMD_SET_DRINK_ALARM_CONFIG
             setAlarmInfo(
                 alarm_info_t.newBuilder()
+                    .setMEnable(enable.value)
                     .apply {
-                        list.mapIndexed { index, alarmClockT ->
-                            setMInfo(index, alarmClockT)
+                        list.forEach { alarmClockT ->
+                            addMInfo(alarmClockT)
                         }
                     }
                     .build()
@@ -570,14 +571,15 @@ class ProtoBufHelper private constructor() {
     /**
      * 设置吃药闹钟信息
      */
-    fun sendCMD_SET_MEDI_ALARM_CONFIG(list: List<alarm_clock_t>): List<ByteArray> {
+    fun sendCMD_SET_MEDI_ALARM_CONFIG(enable: SwitchType, list: List<alarm_clock_t>): List<ByteArray> {
         return createBase {
             cmd = cmd_t.CMD_SET_MEDI_ALARM_CONFIG
             setAlarmInfo(
                 alarm_info_t.newBuilder()
+                    .setMEnable(enable.value)
                     .apply {
-                        list.mapIndexed { index, alarmClockT ->
-                            setMInfo(index, alarmClockT)
+                        list.forEach {  alarmClockT ->
+                            addMInfo(alarmClockT)
                         }
                     }
                     .build()

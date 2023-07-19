@@ -1,17 +1,31 @@
 package com.artillery.protobuf.utils
 
+import com.artillery.protobuf.AlarmChoiceDay
 import com.artillery.protobuf.model.watch_cmds
 import com.artillery.protobuf.model.watch_cmds.Builder
 import com.artillery.protobuf.model.watch_cmds.newBuilder
 import com.blankj.utilcode.util.LogUtils
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+import java.util.Calendar
 import java.util.TimeZone
+import kotlin.experimental.or
 
 /**
  * @author : zhiweizhu
  * create on: 2023/7/15 上午9:25
  */
+
+
+/**
+ * 根据输入的闹钟重复天计算得出一个 或值
+ */
+fun createAlarmRepeat(vararg values: AlarmChoiceDay): Int{
+    return values
+        .map { value -> value.byte }
+        .fold(0.toByte()) { acc, day -> acc or day.toByte() }
+        .byte2Int()
+}
 
 
 fun watch_cmds.createBytes(head: Short, mtuSize: Int, fixedLength: Int): List<ByteArray>{
@@ -50,5 +64,9 @@ fun Builder.createDefParams(isResponse: Boolean = true): Builder{
     return this.setResponse(isResponse)
         .setSeconds(System.currentTimeMillis().millisecond2Seconds())
         .setTimezone(TimeZone.getDefault().zoneToInt())
+}
+
+fun timeZone(): Int{
+    return Calendar.getInstance().timeZone.zoneToInt()
 }
 

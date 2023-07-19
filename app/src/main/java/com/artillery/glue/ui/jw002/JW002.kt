@@ -41,6 +41,12 @@ import com.artillery.protobuf.ProtoBufHelper
 import com.artillery.protobuf.SwitchType
 import com.artillery.protobuf.model.alarm_clock_t
 import com.artillery.protobuf.utils.byte2Int
+import com.artillery.protobuf.utils.createAlarmRepeat
+import com.artillery.protobuf.utils.timeZone
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.ZoneOffset
+import java.time.temporal.TemporalField
 import kotlin.experimental.or
 import kotlin.random.Random
 
@@ -59,7 +65,7 @@ fun JW002Compose(navController: NavController, viewModel: JW002ConnectViewModel)
     val scope = rememberCoroutineScope()
 
     fun writeBytes(bytes: ByteArray, characteristicType: Int = ABaseBleManager.WRITE) {
-        viewModel.writeByteArray(bytes,characteristicType)
+        viewModel.writeByteArray(bytes, characteristicType)
     }
 
     fun writeListBytes(list: List<ByteArray>, characteristicType: Int = ABaseBleManager.WRITE) {
@@ -74,7 +80,7 @@ fun JW002Compose(navController: NavController, viewModel: JW002ConnectViewModel)
             .verticalScroll(scrollState)
             .padding(horizontal = 10.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp)
-    ){
+    ) {
         Text(
             text = "当前连接状态: ${connectState?.isConnected ?: false}",
             style = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.Bold)
@@ -115,14 +121,18 @@ fun JW002Compose(navController: NavController, viewModel: JW002ConnectViewModel)
             "设置短信通知开关",
             "发送短信消息",
             onFirstClick = {
-                writeListBytes(ProtoBufHelper.getInstance().sendCMD_SET_MESSAGE_SWITCH(
-                    MessageSwitch.Sms(1)
-                ))
+                writeListBytes(
+                    ProtoBufHelper.getInstance().sendCMD_SET_MESSAGE_SWITCH(
+                        MessageSwitch.Sms(1)
+                    )
+                )
             },
             onSecondClick = {
-                writeListBytes(ProtoBufHelper.getInstance().sendCMD_SET_MESSAGE_DATA(
-                    MsgType.Sms, "短信", "我是测试用的消息${Random.nextInt(0, 10000)}"
-                ))
+                writeListBytes(
+                    ProtoBufHelper.getInstance().sendCMD_SET_MESSAGE_DATA(
+                        MsgType.Sms, "短信", "我是测试用的消息${Random.nextInt(0, 10000)}"
+                    )
+                )
             }
         )
 
@@ -145,14 +155,18 @@ fun JW002Compose(navController: NavController, viewModel: JW002ConnectViewModel)
             "心率配置开",
             "心率配置关",
             onFirstClick = {
-                writeListBytes(ProtoBufHelper.getInstance().sendCMD_SET_HR_CONFIG(
-                    SwitchType.ON.value, 5, 180, 30
-                ))
+                writeListBytes(
+                    ProtoBufHelper.getInstance().sendCMD_SET_HR_CONFIG(
+                        SwitchType.ON.value, 5, 180, 30
+                    )
+                )
             },
             onSecondClick = {
-                writeListBytes(ProtoBufHelper.getInstance().sendCMD_SET_HR_CONFIG(
-                    SwitchType.OFF.value, 5, 180, 30
-                ))
+                writeListBytes(
+                    ProtoBufHelper.getInstance().sendCMD_SET_HR_CONFIG(
+                        SwitchType.OFF.value, 5, 180, 30
+                    )
+                )
             }
         )
 
@@ -171,14 +185,18 @@ fun JW002Compose(navController: NavController, viewModel: JW002ConnectViewModel)
             "血氧开",
             "血氧关",
             onFirstClick = {
-                writeListBytes(ProtoBufHelper.getInstance().sendCMD_SET_SPO2_CONFIG(
-                    SwitchType.ON.value, 5, 180, 30
-                ))
+                writeListBytes(
+                    ProtoBufHelper.getInstance().sendCMD_SET_SPO2_CONFIG(
+                        SwitchType.ON.value, 5, 180, 30
+                    )
+                )
             },
             onSecondClick = {
-                writeListBytes(ProtoBufHelper.getInstance().sendCMD_SET_SPO2_CONFIG(
-                    SwitchType.OFF.value, 5, 180, 30
-                ))
+                writeListBytes(
+                    ProtoBufHelper.getInstance().sendCMD_SET_SPO2_CONFIG(
+                        SwitchType.OFF.value, 5, 180, 30
+                    )
+                )
             }
         )
 
@@ -199,14 +217,18 @@ fun JW002Compose(navController: NavController, viewModel: JW002ConnectViewModel)
             "压力开",
             "压力关",
             onFirstClick = {
-                writeListBytes(ProtoBufHelper.getInstance().sendCMD_SET_STRESS_CONFIG(
-                    SwitchType.ON.value, 5
-                ))
+                writeListBytes(
+                    ProtoBufHelper.getInstance().sendCMD_SET_STRESS_CONFIG(
+                        SwitchType.ON.value, 5
+                    )
+                )
             },
             onSecondClick = {
-                writeListBytes(ProtoBufHelper.getInstance().sendCMD_SET_STRESS_CONFIG(
-                    SwitchType.OFF.value, 5
-                ))
+                writeListBytes(
+                    ProtoBufHelper.getInstance().sendCMD_SET_STRESS_CONFIG(
+                        SwitchType.OFF.value, 5
+                    )
+                )
             }
         )
 
@@ -257,7 +279,7 @@ fun JW002Compose(navController: NavController, viewModel: JW002ConnectViewModel)
             onSecondClick = {
                 writeListBytes(
                     ProtoBufHelper.getInstance().sendCMD_SET_NOTDISTURB_CONFIG(
-                        0,1
+                        0, 1
                     )
                 )
             }
@@ -273,23 +295,117 @@ fun JW002Compose(navController: NavController, viewModel: JW002ConnectViewModel)
                 )
             },
             onSecondClick = {
-                val repeate = listOf(
-                    AlarmChoiceDay.Monday,
-                    AlarmChoiceDay.Sunday,
-                ).map { value -> value.byte }.fold(0.toByte()) { acc, day -> acc or day.toByte() }.byte2Int()
                 writeListBytes(
                     ProtoBufHelper.getInstance().sendCMD_SET_CLOCK_ALARM_CONFIG(
                         SwitchType.ON.value,
                         listOf(
                             ProtoBufHelper.getInstance().createAlarm(
-                                1, SwitchType.ON.value, 1,
-                                repeate, 8, 30, "闹钟1"
+                                1,
+                                SwitchType.ON,
+                                1,
+                                createAlarmRepeat(
+                                    AlarmChoiceDay.Monday,
+                                    AlarmChoiceDay.Sunday
+                                ),
+                                8,
+                                30,
+                                "闹钟1"
                             )
                         )
                     )
                 )
             }
         )
+
+        UnitRowLayout(
+            "同步喝水闹钟",
+            "设置喝水闹钟",
+            onFirstClick = {
+                writeListBytes(
+                    ProtoBufHelper.getInstance().sendCMD_SYNC_DRINK_ALARM_CONFIG()
+                )
+            },
+            onSecondClick = {
+                writeListBytes(
+                    ProtoBufHelper.getInstance().sendCMD_SET_DRINK_ALARM_CONFIG(
+                        SwitchType.ON,
+                        listOf(
+                            ProtoBufHelper.getInstance().createAlarm(
+                                1,
+                                SwitchType.ON,
+                                1,
+                                createAlarmRepeat(
+                                    AlarmChoiceDay.Monday,
+                                    AlarmChoiceDay.Sunday
+                                ),
+                                10, 30, "闹钟1"
+                            )
+                        )
+                    )
+                )
+            }
+        )
+
+        UnitRowLayout(
+            "同步吃药闹钟",
+            "设置吃药闹钟",
+            onFirstClick = {
+                writeListBytes(
+                    ProtoBufHelper.getInstance().sendCMD_SYNC_MEDI_ALARM_CONFIG()
+                )
+            },
+            onSecondClick = {
+                writeListBytes(
+                    ProtoBufHelper.getInstance().sendCMD_SET_MEDI_ALARM_CONFIG(
+                        SwitchType.ON,
+                        listOf(
+                            ProtoBufHelper.getInstance().createAlarm(
+                                1,
+                                SwitchType.ON,
+                                0,
+                                createAlarmRepeat(
+                                    AlarmChoiceDay.Monday,
+                                    AlarmChoiceDay.Wednesday
+                                ),
+                                10,
+                                42,
+                                "吃药闹钟"
+                            )
+                        )
+                    )
+                )
+            }
+        )
+
+
+        UnitRowLayout(
+            "设置国家信息",
+            "设置时间",
+            onFirstClick = {
+                writeListBytes(
+                    ProtoBufHelper.getInstance().sendCMD_SET_COUNTRY_INFO(
+                        "中国",
+                        timeZone()
+                    )
+                )
+            },
+            onSecondClick = {
+                //当前时间基础上 + 2个小时
+                val localDateTime = LocalDateTime.now().plusHours(2)
+                writeListBytes(
+                    ProtoBufHelper.getInstance().sendCMD_SET_TIME_INFO(
+                        localDateTime.year,
+                        localDateTime.monthValue,
+                        localDateTime.dayOfMonth,
+                        localDateTime.hour,
+                        localDateTime.minute,
+                        localDateTime.second,
+                        timeZone()
+                    )
+                )
+            }
+        )
+
 
         UnitRowLayout(
             "--",
@@ -305,7 +421,6 @@ fun JW002Compose(navController: NavController, viewModel: JW002ConnectViewModel)
                 )
             }
         )
-
 
 
         /*调试直观查看数据*/
