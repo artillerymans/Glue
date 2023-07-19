@@ -34,7 +34,15 @@ import com.artillery.glue.ble.viewModels.JW002ConnectViewModel
 import com.artillery.glue.model.DebugBaseItem
 import com.artillery.glue.model.DebugDataType
 import com.artillery.glue.ui.NavConstant
+import com.artillery.protobuf.AlarmChoiceDay
+import com.artillery.protobuf.MessageSwitch
+import com.artillery.protobuf.MsgType
 import com.artillery.protobuf.ProtoBufHelper
+import com.artillery.protobuf.SwitchType
+import com.artillery.protobuf.model.alarm_clock_t
+import com.artillery.protobuf.utils.byte2Int
+import kotlin.experimental.or
+import kotlin.random.Random
 
 /**
  * @author : zhiweizhu
@@ -83,12 +91,218 @@ fun JW002Compose(navController: NavController, viewModel: JW002ConnectViewModel)
         )
         UnitRowLayout(
             "获取基本信息",
-            "获取设备信息",
+            "绑定设备",
             onFirstClick = {
                 writeListBytes(ProtoBufHelper.getInstance().sendCMD_GET_BASE_PARAM())
             },
             onSecondClick = {
-                writeListBytes(ProtoBufHelper.getInstance().sendCMD_GET_DEVICE_INFO(), JW002BleManage.WriteACK)
+                writeListBytes(ProtoBufHelper.getInstance().sendCMD_BIND_DEVICE())
+            }
+        )
+
+        UnitRowLayout(
+            "获取设备信息",
+            "发送手机信息到手表设备",
+            onFirstClick = {
+                writeListBytes(ProtoBufHelper.getInstance().sendCMD_GET_DEVICE_INFO())
+            },
+            onSecondClick = {
+                writeListBytes(ProtoBufHelper.getInstance().sendCMD_SET_PHONE_INFO())
+            }
+        )
+
+        UnitRowLayout(
+            "设置短信通知开关",
+            "发送短信消息",
+            onFirstClick = {
+                writeListBytes(ProtoBufHelper.getInstance().sendCMD_SET_MESSAGE_SWITCH(
+                    MessageSwitch.Sms(1)
+                ))
+            },
+            onSecondClick = {
+                writeListBytes(ProtoBufHelper.getInstance().sendCMD_SET_MESSAGE_DATA(
+                    MsgType.Sms, "短信", "我是测试用的消息${Random.nextInt(0, 10000)}"
+                ))
+            }
+        )
+
+        UnitRowLayout(
+            "获取心率配置信息",
+            "同步最新心率值",
+            onFirstClick = {
+                writeListBytes(
+                    ProtoBufHelper.getInstance().sendCMD_GET_HR_CONFIG()
+                )
+            },
+            onSecondClick = {
+                writeListBytes(
+                    ProtoBufHelper.getInstance().sendCMD_SYNC_HR_DETECT_VAL()
+                )
+            }
+        )
+
+        UnitRowLayout(
+            "心率配置开",
+            "心率配置关",
+            onFirstClick = {
+                writeListBytes(ProtoBufHelper.getInstance().sendCMD_SET_HR_CONFIG(
+                    SwitchType.ON.value, 5, 180, 30
+                ))
+            },
+            onSecondClick = {
+                writeListBytes(ProtoBufHelper.getInstance().sendCMD_SET_HR_CONFIG(
+                    SwitchType.OFF.value, 5, 180, 30
+                ))
+            }
+        )
+
+        UnitRowLayout(
+            "获取血氧",
+            "同步血氧",
+            onFirstClick = {
+                writeListBytes(ProtoBufHelper.getInstance().sendCMD_GET_SPO2_CONFIG())
+            },
+            onSecondClick = {
+                writeListBytes(ProtoBufHelper.getInstance().sendCMD_SYNC_SPO2_DETECT_VAL())
+            }
+        )
+
+        UnitRowLayout(
+            "血氧开",
+            "血氧关",
+            onFirstClick = {
+                writeListBytes(ProtoBufHelper.getInstance().sendCMD_SET_SPO2_CONFIG(
+                    SwitchType.ON.value, 5, 180, 30
+                ))
+            },
+            onSecondClick = {
+                writeListBytes(ProtoBufHelper.getInstance().sendCMD_SET_SPO2_CONFIG(
+                    SwitchType.OFF.value, 5, 180, 30
+                ))
+            }
+        )
+
+
+
+        UnitRowLayout(
+            "获取压力",
+            "同步压力",
+            onFirstClick = {
+                writeListBytes(ProtoBufHelper.getInstance().sendCMD_GET_STRESS_CONFIG())
+            },
+            onSecondClick = {
+                writeListBytes(ProtoBufHelper.getInstance().sendCMD_SYNC_STRESS_DETECT_VAL())
+            }
+        )
+
+        UnitRowLayout(
+            "压力开",
+            "压力关",
+            onFirstClick = {
+                writeListBytes(ProtoBufHelper.getInstance().sendCMD_SET_STRESS_CONFIG(
+                    SwitchType.ON.value, 5
+                ))
+            },
+            onSecondClick = {
+                writeListBytes(ProtoBufHelper.getInstance().sendCMD_SET_STRESS_CONFIG(
+                    SwitchType.OFF.value, 5
+                ))
+            }
+        )
+
+        UnitRowLayout(
+            "获取久坐",
+            "获取勿扰",
+            onFirstClick = {
+                writeListBytes(
+                    ProtoBufHelper.getInstance().sendCMD_GET_LONG_SIT_CONFIG()
+                )
+
+            },
+            onSecondClick = {
+                writeListBytes(
+                    ProtoBufHelper.getInstance().sendCMD_GET_NOTDISTURB_CONFIG()
+                )
+            }
+        )
+
+        UnitRowLayout(
+            "设置久坐开",
+            "设置久坐关",
+            onFirstClick = {
+                writeListBytes(
+                    ProtoBufHelper.getInstance().sendCMD_SET_LONG_SIT_CONFIG(
+                        SwitchType.ON.value, 30, 9, 30, 18, 30,
+                        0
+                    )
+                )
+            },
+            onSecondClick = {
+                writeListBytes(
+                    ProtoBufHelper.getInstance().sendCMD_SET_LONG_SIT_CONFIG(SwitchType.OFF.value)
+                )
+            }
+        )
+
+        UnitRowLayout(
+            "设置勿扰开",
+            "设置勿扰关",
+            onFirstClick = {
+                writeListBytes(
+                    ProtoBufHelper.getInstance().sendCMD_SET_NOTDISTURB_CONFIG(
+                        1, 1, 9, 30, 18, 30
+                    )
+                )
+            },
+            onSecondClick = {
+                writeListBytes(
+                    ProtoBufHelper.getInstance().sendCMD_SET_NOTDISTURB_CONFIG(
+                        0,1
+                    )
+                )
+            }
+        )
+
+
+        UnitRowLayout(
+            "同步闹钟",
+            "设置闹钟",
+            onFirstClick = {
+                writeListBytes(
+                    ProtoBufHelper.getInstance().sendCMD_SYNC_CLOCK_ALARM_CONFIG()
+                )
+            },
+            onSecondClick = {
+                val repeate = listOf(
+                    AlarmChoiceDay.Monday,
+                    AlarmChoiceDay.Sunday,
+                ).map { value -> value.byte }.fold(0.toByte()) { acc, day -> acc or day.toByte() }.byte2Int()
+                writeListBytes(
+                    ProtoBufHelper.getInstance().sendCMD_SET_CLOCK_ALARM_CONFIG(
+                        SwitchType.ON.value,
+                        listOf(
+                            ProtoBufHelper.getInstance().createAlarm(
+                                1, SwitchType.ON.value, 1,
+                                repeate, 8, 30, "闹钟1"
+                            )
+                        )
+                    )
+                )
+            }
+        )
+
+        UnitRowLayout(
+            "--",
+            "--",
+            onFirstClick = {
+                writeListBytes(
+                    ProtoBufHelper.getInstance().sendCMD_GET_NOTDISTURB_CONFIG()
+                )
+            },
+            onSecondClick = {
+                writeListBytes(
+                    ProtoBufHelper.getInstance().sendCMD_GET_NOTDISTURB_CONFIG()
+                )
             }
         )
 

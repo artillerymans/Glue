@@ -55,8 +55,9 @@ class JW002BleManage {
     }
 
     fun connect(device: BluetoothDevice) {
-        clear()
-        mJW002Manage = JW002Manage()
+        if (mJW002Manage == null){
+            mJW002Manage = JW002Manage()
+        }
         mJW002Manage?.connectByBluetoothDevice(device)
     }
 
@@ -82,6 +83,10 @@ class JW002BleManage {
 
     fun post(list: List<ByteArray>, characteristicType: Int = ABaseBleManager.WRITE) {
         mJW002Manage?.post(list, characteristicType)
+    }
+
+    fun bindDevice(){
+        mJW002Manage?.bindDevice()
     }
 
 
@@ -320,7 +325,7 @@ class JW002BleManage {
         }
 
 
-        private fun bindDevice() {
+        fun bindDevice() {
             /*是否发起绑定*/
             try {
                 bluetoothDevice?.let {

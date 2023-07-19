@@ -1,4 +1,5 @@
 package com.artillery.glue.ble.viewModels
+
 import android.Manifest
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
@@ -35,13 +36,14 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import no.nordicsemi.android.ble.ktx.state.ConnectionState
+import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
 /**
  * @author : zhiweizhu
  * create on: 2023/7/13 下午5:59
  */
-class JW002ConnectViewModel: ViewModel() {
+class JW002ConnectViewModel : ViewModel() {
     private val mBleDataChangeChannel: Channel<Pair<Int, ByteArray>> by lazy(LazyThreadSafetyMode.NONE) {
         Channel()
     }
@@ -92,7 +94,7 @@ class JW002ConnectViewModel: ViewModel() {
             }
             try {
                 bluetoothManager.adapter.bondedDevices.forEach { device -> connect(device) }
-            }catch (e: SecurityException){
+            } catch (e: SecurityException) {
                 e.printStackTrace()
             }
 
@@ -117,8 +119,6 @@ class JW002ConnectViewModel: ViewModel() {
     val readWriteListFlow: StateFlow<List<DebugBaseItem>> = _readWriteListFlow
 
 
-
-
     private fun removeDevice(device: BluetoothDevice) {
         JW002BleManage.getInstance().disConnect(device)
     }
@@ -131,9 +131,10 @@ class JW002ConnectViewModel: ViewModel() {
 
         JW002BleManage.getInstance().setBleNotifyDataChannel(mBleDataChangeChannel)
 
-        if (!JW002BleManage.getInstance().isConnect()){
+        if (!JW002BleManage.getInstance().isConnect()) {
             viewModelScope.launch {
                 JW002BleManage.getInstance().connectStateFlow().collect { state ->
+                    LogUtils.d("connect: $state")
                     _connectStatusFlow.value = state
                 }
             }
@@ -166,8 +167,15 @@ class JW002ConnectViewModel: ViewModel() {
             for (value in mBleDataChangeChannel) {
                 ThreadUtils.getMainHandler().run {
                     //蓝牙回来的数据
-                    LogUtils.d("接收到数据 => ${ConvertUtils.bytes2HexString(value.second.toBuffer(
-                        ByteOrder.LITTLE_ENDIAN).array())}")
+                    LogUtils.d(
+                        "接收到数据 => ${
+                            ConvertUtils.bytes2HexString(
+                                value.second.toBuffer(
+                                    ByteOrder.LITTLE_ENDIAN
+                                ).array()
+                            )
+                        }"
+                    )
                     noticeRefreshUI(
                         listOf(value.second),
                         if (value.first == JW002BleManage.NotifyACK)
@@ -194,43 +202,72 @@ class JW002ConnectViewModel: ViewModel() {
     }
 
 
-    /**
-     * 缓存用的
-     */
-    private val mCacheList: MutableList<ByteArray> by lazy(LazyThreadSafetyMode.NONE) {
-        mutableListOf()
-    }
 
     fun pack(pair: Pair<Int, ByteArray>) {
-        ProtoBufHelper.getInstance().receive(pair.second){ value ->
-            when(val cmd = value.cmd){
+        ProtoBufHelper.getInstance().receive(pair.second) { value ->
 
+            writeByteArray(
+                ProtoBufHelper.getInstance().sendAckReply(0),
+                JW002BleManage.WriteACK
+            )
+
+            val cmd = value.cmd
+            LogUtils.d("pack: cmd -> ${cmd.name}")
+            when (cmd) {
                 watch_cmds.cmd_t.CMD_GET_BASE_PARAM -> {  // 获取基本信息
                     value.baseParam?.let { baseParamT ->
                         LogUtils.d("pack: baseParamT -> ${GsonUtils.toJson(baseParamT)}")
                         val mtuSize = baseParamT.mMtu
-                        JW002BleManage.getInstance().setMtuSize(mtuSize){ number ->
+                        JW002BleManage.getInstance().setMtuSize(mtuSize) { number ->
                             LogUtils.d("pack: 设置组包中的mut大小 -> $number")
                             //蓝牙设置mtu成功进行设置组包中的mtu大小
                             ProtoBufHelper.getInstance().setMtuSize(number)
+                            //未绑定
+                            if (baseParamT.mIsBind == 0) {
+                                writeByteArrays(
+                                    ProtoBufHelper.getInstance().sendCMD_BIND_DEVICE()
+                                )
+                            }
                         }
-                        //未绑定
-                        if (baseParamT.mIsBind == 0){
-                            writeByteArrays(
-                                ProtoBufHelper.getInstance().sendCMD_BIND_DEVICE(),
-                                JW002BleManage.WriteACK
-                            )
-                        }
+
 
                     }
                 }
+
                 watch_cmds.cmd_t.CMD_GET_DEVICE_INFO -> {  //获取设备信息
                     value.devInfo?.let { deviceInfo ->
                         LogUtils.d("pack: ${GsonUtils.toJson(deviceInfo)}")
                     }
                 }
+
+                watch_cmds.cmd_t.CMD_RING_PHONE_CTRL -> { //查找手机
+                    value.ctrlCode?.let { data ->
+                        LogUtils.d("pack: ${if (data.mCode == 0) "不响铃" else "响铃"}")
+                    }
+                }
+                watch_cmds.cmd_t.CMD_SET_PHONE_INFO -> {  //手表信息发送设备
+                    value.phoneInfo?.let { data ->
+                        LogUtils.d("pack: phoneInfo -> ${GsonUtils.toJson(data)}")
+                    }
+                }
+
+                watch_cmds.cmd_t.CMD_BIND_DEVICE -> {   //绑定设备
+                    LogUtils.d("pack: CMD_BIND_DEVICE = ${value.ctrlCode.mCode}")
+                    when (value.ctrlCode.mCode){
+                        3 -> JW002BleManage.getInstance().bindDevice()
+                    }
+                }
+
+                watch_cmds.cmd_t.CMD_SET_MESSAGE_SWITCH -> {   //设置通知开关
+                    LogUtils.d("pack: CMD_SET_MESSAGE_SWITCH = ${value.errCode.err}")
+                }
+
+                watch_cmds.cmd_t.CMD_SET_MESSAGE_DATA -> {   //发送消息数据
+                    LogUtils.d("pack: CMD_SET_MESSAGE_DATA = ${value.errCode.err}")
+                }
+
                 else -> {
-                    LogUtils.d("pack: 未知命令 -> ${cmd.name}")
+                    LogUtils.d("pack: 未知命令 -> ${cmd.name}， error = ${value.errCode?.err}")
                 }
             }
         }
@@ -246,91 +283,72 @@ class JW002ConnectViewModel: ViewModel() {
 
     private fun noticeRefreshUI(bytes: List<ByteArray>, type: DebugDataType) {
         val list = _readWriteListFlow.value.toMutableList()
-        list.addAll(
-            0,
-            bytes.mapIndexed { index, values ->
+        bytes.forEachIndexed { index, bytes ->
+            val watch = analysisByteArray(bytes)
+            if (watch != null) {
                 val date = TimeUtils.getNowDate()
-
-                val hexCmd = values[0].byte2Int().toString(16)
-
-                if (type == DebugDataType.notice){
-                    val buffer = values.toBuffer(ByteOrder.LITTLE_ENDIAN)
-                    val header = buffer.short.toUShort().toString(16)
-                    val dataLength = buffer.short.toUShort()
-                    val dataCrc = buffer.short.toUShort()
-                    val tempBytes = ByteArray(buffer.remaining())
-                    buffer.get(tempBytes)
-                    val tempCrc = tempBytes.crcJW002()
-                    val watchCmds = watch_cmds.parseFrom(tempBytes)
-
-
+                list.add(
+                    0,
                     DebugBaseItem.DebugItem(
                         type,
-                        TimeUtils.date2String(date, TimeUtils.getSafeDateFormat("MM-dd HH:mm:ss SSS")),
-                        values,
-                        GsonUtils.toJson(watchCmds),
+                        TimeUtils.date2String(
+                            date,
+                            TimeUtils.getSafeDateFormat("MM-dd HH:mm:ss SSS")
+                        ),
+                        bytes,
+                        GsonUtils.toJson(watch),
                         index,
-                        watchCmds.cmd.name
+                        watch.cmd.name
                     )
+                )
+            }
 
-                }else if (type == DebugDataType.write){
-
-                    val buffer = values.toBuffer(ByteOrder.LITTLE_ENDIAN)
-                    val header = buffer.short.toUShort().toString(16)
-                    val dataLength = buffer.short.toUShort()
-                    val dataCrc = buffer.short.toUShort()
-                    val tempBytes = ByteArray(buffer.remaining())
-                    buffer.get(tempBytes)
-
-                    val tempCrc = tempBytes.crcJW002()
-                    LogUtils.d("noticeRefreshUI: dataLength = $dataLength , dataCrc = $dataCrc,  tempCrc = $tempCrc")
-                    LogUtils.d("noticeRefreshUI: crc 是否相等 -> ${dataCrc == tempCrc}")
-
-                    LogUtils.d("noticeRefreshUI: $header,    ${ConvertUtils.bytes2HexString(tempBytes)}")
-                    val watchCmds = watch_cmds.parseFrom(tempBytes)
-
-                    DebugBaseItem.DebugItem(
-                        type,
-                        TimeUtils.date2String(date, TimeUtils.getSafeDateFormat("MM-dd HH:mm:ss SSS")),
-                        values,
-                        GsonUtils.toJson(watchCmds),
-                        index,
-                        watchCmds.cmd.name
-                    )
-                }else {
-                    DebugBaseItem.DebugItem(
-                        type,
-                        TimeUtils.date2String(date, TimeUtils.getSafeDateFormat("MM-dd HH:mm:ss SSS")),
-                        values,
-                        ConvertUtils.bytes2HexString(values),
-                        index,
-                        hexCmd
-                    )
-                }
-
-
-
-            }.toList()
-        )
+        }
         _readWriteListFlow.value = list
     }
 
-    private fun desString(state: Int): String {
-        return when (state) {
-            BleConstantData.SUCCESS_BLE_CODE -> "->成功"
-            BleConstantData.FAIL_BLE_CODE -> "->失败"
-            else -> "->未知"
-        }
+
+    private val mCacheBytes by lazy(LazyThreadSafetyMode.NONE) {
+        mutableListOf<Byte>()
     }
 
-    private fun desSwitch(state: Int): String {
-        return when (state) {
-            0x01 -> "->开"
-            0x00 -> "->关"
-            else -> "->未知"
+    fun analysisByteArray(bytes: ByteArray): watch_cmds? {
+        //转换成小端
+        val buffer = ByteBuffer.wrap(bytes).apply {
+            order(ByteOrder.LITTLE_ENDIAN)
+        }
+        //包头
+        val tempHeader = buffer.short.toUShort().toString(16)
+        if (!ProtoBufHelper.Companion.Ble.BLE_HEADER.equals(tempHeader, true)) {
+            LogUtils.d("analysisByteArray: 包头为 => $tempHeader, 不进行解析")
+            return null
+        }
+        //数据长度
+        val length = buffer.short.toUShort()
+        //校验和
+        val crc = buffer.short.toUShort()
+        val tempBytes = ByteArray(buffer.remaining())
+        buffer.get(tempBytes)
+
+        //说明当前一包数据就够了 不需要进行合包
+        if (length == tempBytes.size.toUShort()) {
+            return ProtoBufHelper.getInstance().bytes2WatchCmd(tempBytes, crc)
+        } else {
+            //走到这里说明当前数据是分包了的
+            mCacheBytes.addAll(tempBytes.toList())
+            val tempLength = mCacheBytes.size.toUShort()
+            if (length == tempLength) {
+                val tempCacheBytes = mCacheBytes.toByteArray()
+                //crc校验通过
+                val watch = ProtoBufHelper.getInstance().bytes2WatchCmd(tempCacheBytes, crc)
+                watch?.let {
+                    mCacheBytes.clear()
+                    return it
+                }
+            }
+            return null
         }
     }
-
 
 
 }

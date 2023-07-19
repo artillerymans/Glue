@@ -41,6 +41,22 @@ fun ByteArray.cut2ListByteArray(size: Int): List<ByteArray>{
 }
 
 
+fun Byte.byte2Int(): Int{
+    return this.toInt() and 0xff
+}
+
+
+fun Int?.isNotEmpty(): Boolean{
+    val tempValue = this ?: 0
+    return tempValue > 0
+}
+
+fun Float?.isNotEmpty(): Boolean{
+    val tempValue = this ?: 0F
+    return tempValue > 0F
+}
+
+
 /**
  * 随机生成 size 个字节数组的随机值
  */

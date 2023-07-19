@@ -146,4 +146,58 @@ class ExampleUnitTest {
         println("Public Key (pKey1): ${pKey1.toList()}")
         println("Private Key (sKey1): ${sKey1.toList()}")
     }
+
+
+    @Test
+    fun binaryTest(){
+        sendCMD_SET_MESSAGE_SWITCH(MessageSwitch.Sms(1), MessageSwitch.Gmail(1))
+    }
+
+
+    @Test
+    fun setAlarm(){
+        println("40".toInt(16).toString(2))
+        println("20".toInt(16).toString(2))
+        println("10".toInt(16).toString(2))
+    }
+
+
+    fun sendCMD_SET_MESSAGE_SWITCH(vararg values: MessageSwitch){
+        val defValue = UInt.MIN_VALUE
+        var tempValue = 0u
+        values.forEach { msg ->
+            val tempTypeValue = when(msg.type){
+                MsgType.All -> msg.value.toUInt()
+                MsgType.Instagram -> msg.value.toUInt() shl 1
+                MsgType.Linkedin -> msg.value.toUInt() shl 2
+                MsgType.Twitter -> msg.value.toUInt() shl 3
+                MsgType.FaceBook -> msg.value.toUInt() shl 4
+                MsgType.FaceTime -> msg.value.toUInt() shl 5
+                MsgType.Feixin -> msg.value.toUInt() shl 6
+                MsgType.Line -> msg.value.toUInt() shl 7
+                MsgType.Sound -> msg.value.toUInt() shl 8
+                MsgType.Gmail -> msg.value.toUInt() shl 9
+                MsgType.Webook -> msg.value.toUInt() shl 10
+                MsgType.Wechat -> msg.value.toUInt() shl 11
+                MsgType.QQ -> msg.value.toUInt() shl 12
+                MsgType.Sms -> msg.value.toUInt() shl 13
+                MsgType.Call -> msg.value.toUInt() shl 14
+                MsgType.Skype -> msg.value.toUInt() shl 15
+                MsgType.DingTalk -> msg.value.toUInt() shl 16
+                MsgType.AliWangWang -> msg.value.toUInt() shl 17
+                MsgType.Alipay -> msg.value.toUInt() shl 18
+                MsgType.KakaoTalk -> msg.value.toUInt() shl 19
+                MsgType.Qianiu -> msg.value.toUInt() shl 20
+                MsgType.WhatsApp -> msg.value.toUInt() shl 21
+                MsgType.Pinterest -> msg.value.toUInt() shl 22
+                MsgType.OtherApp -> msg.value.toUInt() shl 23
+                MsgType.Message -> msg.value.toUInt() shl 24
+                else -> defValue
+            }
+            tempValue = tempTypeValue xor defValue xor tempValue
+        }
+
+        println(tempValue.toString(2))
+
+    }
 }
