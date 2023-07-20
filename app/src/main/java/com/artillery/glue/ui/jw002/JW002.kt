@@ -569,9 +569,9 @@ fun JW002Compose(navController: NavController, viewModel: JW002ConnectViewModel)
                 )
             },
             onSecondClick = {
-                writeListBytes(
+                /*writeListBytes(
                     ProtoBufHelper.getInstance().()
-                )
+                )*/
             }
         )
 
