@@ -35,6 +35,9 @@ import com.artillery.glue.model.DebugBaseItem
 import com.artillery.glue.model.DebugDataType
 import com.artillery.glue.ui.NavConstant
 import com.artillery.protobuf.AlarmChoiceDay
+import com.artillery.protobuf.Climate
+import com.artillery.protobuf.DeviceModel
+import com.artillery.protobuf.HealthDataType
 import com.artillery.protobuf.MessageSwitch
 import com.artillery.protobuf.MsgType
 import com.artillery.protobuf.ProtoBufHelper
@@ -47,6 +50,7 @@ import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.temporal.TemporalField
+import java.util.Calendar
 import kotlin.experimental.or
 import kotlin.random.Random
 
@@ -157,14 +161,14 @@ fun JW002Compose(navController: NavController, viewModel: JW002ConnectViewModel)
             onFirstClick = {
                 writeListBytes(
                     ProtoBufHelper.getInstance().sendCMD_SET_HR_CONFIG(
-                        SwitchType.ON.value, 5, 180, 30
+                        SwitchType.ON, 5, 180, 30
                     )
                 )
             },
             onSecondClick = {
                 writeListBytes(
                     ProtoBufHelper.getInstance().sendCMD_SET_HR_CONFIG(
-                        SwitchType.OFF.value, 5, 180, 30
+                        SwitchType.OFF, 5, 180, 30
                     )
                 )
             }
@@ -187,14 +191,14 @@ fun JW002Compose(navController: NavController, viewModel: JW002ConnectViewModel)
             onFirstClick = {
                 writeListBytes(
                     ProtoBufHelper.getInstance().sendCMD_SET_SPO2_CONFIG(
-                        SwitchType.ON.value, 5, 180, 30
+                        SwitchType.ON, 5, 180, 30
                     )
                 )
             },
             onSecondClick = {
                 writeListBytes(
                     ProtoBufHelper.getInstance().sendCMD_SET_SPO2_CONFIG(
-                        SwitchType.OFF.value, 5, 180, 30
+                        SwitchType.OFF, 5, 180, 30
                     )
                 )
             }
@@ -219,14 +223,14 @@ fun JW002Compose(navController: NavController, viewModel: JW002ConnectViewModel)
             onFirstClick = {
                 writeListBytes(
                     ProtoBufHelper.getInstance().sendCMD_SET_STRESS_CONFIG(
-                        SwitchType.ON.value, 5
+                        SwitchType.ON, 5
                     )
                 )
             },
             onSecondClick = {
                 writeListBytes(
                     ProtoBufHelper.getInstance().sendCMD_SET_STRESS_CONFIG(
-                        SwitchType.OFF.value, 5
+                        SwitchType.OFF, 5
                     )
                 )
             }
@@ -254,14 +258,14 @@ fun JW002Compose(navController: NavController, viewModel: JW002ConnectViewModel)
             onFirstClick = {
                 writeListBytes(
                     ProtoBufHelper.getInstance().sendCMD_SET_LONG_SIT_CONFIG(
-                        SwitchType.ON.value, 30, 9, 30, 18, 30,
+                        SwitchType.ON, 30, 9, 30, 18, 30,
                         0
                     )
                 )
             },
             onSecondClick = {
                 writeListBytes(
-                    ProtoBufHelper.getInstance().sendCMD_SET_LONG_SIT_CONFIG(SwitchType.OFF.value)
+                    ProtoBufHelper.getInstance().sendCMD_SET_LONG_SIT_CONFIG(SwitchType.OFF)
                 )
             }
         )
@@ -272,14 +276,14 @@ fun JW002Compose(navController: NavController, viewModel: JW002ConnectViewModel)
             onFirstClick = {
                 writeListBytes(
                     ProtoBufHelper.getInstance().sendCMD_SET_NOTDISTURB_CONFIG(
-                        1, 1, 9, 30, 18, 30
+                        SwitchType.ON, 1, 9, 30, 18, 30
                     )
                 )
             },
             onSecondClick = {
                 writeListBytes(
                     ProtoBufHelper.getInstance().sendCMD_SET_NOTDISTURB_CONFIG(
-                        0, 1
+                        SwitchType.OFF, 1
                     )
                 )
             }
@@ -297,7 +301,7 @@ fun JW002Compose(navController: NavController, viewModel: JW002ConnectViewModel)
             onSecondClick = {
                 writeListBytes(
                     ProtoBufHelper.getInstance().sendCMD_SET_CLOCK_ALARM_CONFIG(
-                        SwitchType.ON.value,
+                        SwitchType.ON,
                         listOf(
                             ProtoBufHelper.getInstance().createAlarm(
                                 1,
@@ -403,6 +407,414 @@ fun JW002Compose(navController: NavController, viewModel: JW002ConnectViewModel)
                         timeZone()
                     )
                 )
+            }
+        )
+
+
+        UnitRowLayout(
+            "时间格式24",
+            "时间格式12",
+            onFirstClick = {
+                writeListBytes(
+                    ProtoBufHelper.getInstance().sendCMD_SET_TIME_FMT(0)
+                )
+            },
+            onSecondClick = {
+                writeListBytes(
+                    ProtoBufHelper.getInstance().sendCMD_SET_TIME_FMT(1)
+                )
+            }
+        )
+
+        UnitRowLayout(
+            "设置公制",
+            "设置英制",
+            onFirstClick = {
+                writeListBytes(
+                    ProtoBufHelper.getInstance().sendCMD_SET_METRIC_INCH(0)
+                )
+            },
+            onSecondClick = {
+                writeListBytes(
+                    ProtoBufHelper.getInstance().sendCMD_SET_METRIC_INCH(1)
+                )
+            }
+        )
+
+        UnitRowLayout(
+            "设置亮屏30s",
+            "设置亮屏15s",
+            onFirstClick = {
+                writeListBytes(
+                    ProtoBufHelper.getInstance().sendCMD_SET_BRIGHT_DURATION(30)
+                )
+            },
+            onSecondClick = {
+                writeListBytes(
+                    ProtoBufHelper.getInstance().sendCMD_SET_BRIGHT_DURATION(15)
+                )
+            }
+        )
+
+        UnitRowLayout(
+            "菜单蜂窝风格",
+            "菜单瀑布流风格",
+            onFirstClick = {
+                writeListBytes(
+                    ProtoBufHelper.getInstance().sendCMD_SET_MENU_STYLE(0)
+                )
+            },
+            onSecondClick = {
+                writeListBytes(
+                    ProtoBufHelper.getInstance().sendCMD_SET_MENU_STYLE(1)
+                )
+            }
+        )
+
+
+        UnitRowLayout(
+            "同步每天运动目标",
+            "设置每天运动目标",
+            onFirstClick = {
+                writeListBytes(
+                    ProtoBufHelper.getInstance().sendCMD_SYNC_DAY_SPORT_TARGET()
+                )
+            },
+            onSecondClick = {
+                writeListBytes(
+                    ProtoBufHelper.getInstance().sendCMD_SET_DAY_SPORT_TARGET(
+                        30000,
+                        9000,
+                        80000,
+                        1800,
+                        5
+                    )
+                )
+            }
+        )
+
+        UnitRowLayout(
+            "实时步数",
+            "电量信息",
+            onFirstClick = {
+                writeListBytes(
+                    ProtoBufHelper.getInstance().sendCMD_SYNC_ACTUAL_STEP_INFO()
+                )
+            },
+            onSecondClick = {
+                writeListBytes(
+                    ProtoBufHelper.getInstance().sendCMD_SYNC_BATTERY_INFO()
+                )
+            }
+        )
+
+        UnitRowLayout(
+            "找手表开",
+            "找手表关",
+            onFirstClick = {
+                writeListBytes(
+                    ProtoBufHelper.getInstance().sendCMD_RING_WATCH_CTRL_VALUE(SwitchType.ON)
+                )
+            },
+            onSecondClick = {
+                writeListBytes(
+                    ProtoBufHelper.getInstance().sendCMD_RING_WATCH_CTRL_VALUE(SwitchType.OFF)
+                )
+            }
+        )
+
+        UnitRowLayout(
+            "设置天气信息",
+            "--",
+            onFirstClick = {
+                writeListBytes(
+                    ProtoBufHelper.getInstance().sendCMD_SET_WEATHER_INFO(
+                        Calendar.getInstance().get(Calendar.YEAR),
+                        Calendar.getInstance().get(Calendar.MONTH) + 1,
+                        Calendar.getInstance().get(Calendar.DAY_OF_MONTH),
+                        "深圳",
+                        listOf(
+                            ProtoBufHelper.getInstance().createWeatherDay(
+                                Climate.Sunny,
+                                42,
+                                45,
+                                30,
+                                38,
+                                24,
+                                30,
+                                100
+                            ),
+                            ProtoBufHelper.getInstance().createWeatherDay(
+                                Climate.LightRain,
+                                41,
+                                44,
+                                30,
+                                38,
+                                24,
+                                30,
+                                100
+                            ),
+                            ProtoBufHelper.getInstance().createWeatherDay(
+                                Climate.TStorm,
+                                42,
+                                46,
+                                30,
+                                38,
+                                24,
+                                30,
+                                100
+                            )
+                        )
+                    )
+                )
+            },
+            onSecondClick = {
+                writeListBytes(
+                    ProtoBufHelper.getInstance().()
+                )
+            }
+        )
+
+
+
+        UnitRowLayout(
+            "恢复出厂设置",
+            "调试模式",
+            onFirstClick = {
+                writeListBytes(
+                    ProtoBufHelper.getInstance().sendCMD_SET_DEVICE_MODE(DeviceModel.FactoryReset)
+                )
+            },
+            onSecondClick = {
+                writeListBytes(
+                    ProtoBufHelper.getInstance().sendCMD_SET_DEVICE_MODE(DeviceModel.DeBug)
+                )
+            }
+        )
+
+
+        UnitRowLayout(
+            "手机前台运行",
+            "手机后台运行",
+            onFirstClick = {
+                writeListBytes(
+                    ProtoBufHelper.getInstance().sendCMD_PHONE_APP_SET_STATUS(1)
+                )
+            },
+            onSecondClick = {
+                writeListBytes(
+                    ProtoBufHelper.getInstance().sendCMD_PHONE_APP_SET_STATUS(0)
+                )
+            }
+        )
+
+        UnitRowLayout(
+            "获取Log记录",
+            "获取表盘配置",
+            onFirstClick = {
+                writeListBytes(
+                    ProtoBufHelper.getInstance().sendCMD_GET_LOG_INFO_DATA()
+                )
+            },
+            onSecondClick = {
+                writeListBytes(
+                    ProtoBufHelper.getInstance().sendCMD_SYNC_DIAL_CONFIG_DATA()
+                )
+            }
+        )
+
+
+        UnitRowLayout(
+            "同步步数",
+            "同步卡路里",
+            onFirstClick = {
+                writeListBytes(
+                    ProtoBufHelper.getInstance().sendCMD_GET_HEALTH_DATA(
+                        Calendar.getInstance().get(Calendar.YEAR),
+                        Calendar.getInstance().get(Calendar.MONTH) + 1,
+                        Calendar.getInstance().get(Calendar.DAY_OF_MONTH),
+                        HealthDataType.Step
+                    )
+                )
+            },
+            onSecondClick = {
+                writeListBytes(
+                    ProtoBufHelper.getInstance().sendCMD_GET_HEALTH_DATA(
+                        Calendar.getInstance().get(Calendar.YEAR),
+                        Calendar.getInstance().get(Calendar.MONTH) + 1,
+                        Calendar.getInstance().get(Calendar.DAY_OF_MONTH),
+                        HealthDataType.Calorie
+                    )
+                )
+            }
+        )
+
+
+        UnitRowLayout(
+            "同步距离",
+            "同步活动时长",
+            onFirstClick = {
+                writeListBytes(
+                    ProtoBufHelper.getInstance().sendCMD_GET_HEALTH_DATA(
+                        Calendar.getInstance().get(Calendar.YEAR),
+                        Calendar.getInstance().get(Calendar.MONTH) + 1,
+                        Calendar.getInstance().get(Calendar.DAY_OF_MONTH),
+                        HealthDataType.Distance
+                    )
+                )
+            },
+            onSecondClick = {
+                writeListBytes(
+                    ProtoBufHelper.getInstance().sendCMD_GET_HEALTH_DATA(
+                        Calendar.getInstance().get(Calendar.YEAR),
+                        Calendar.getInstance().get(Calendar.MONTH) + 1,
+                        Calendar.getInstance().get(Calendar.DAY_OF_MONTH),
+                        HealthDataType.ActivityDuration
+                    )
+                )
+            }
+        )
+
+        UnitRowLayout(
+            "同步活动次数",
+            "同步心率",
+            onFirstClick = {
+                writeListBytes(
+                    ProtoBufHelper.getInstance().sendCMD_GET_HEALTH_DATA(
+                        Calendar.getInstance().get(Calendar.YEAR),
+                        Calendar.getInstance().get(Calendar.MONTH) + 1,
+                        Calendar.getInstance().get(Calendar.DAY_OF_MONTH),
+                        HealthDataType.NumberActivities
+                    )
+                )
+            },
+            onSecondClick = {
+                writeListBytes(
+                    ProtoBufHelper.getInstance().sendCMD_GET_HEALTH_DATA(
+                        Calendar.getInstance().get(Calendar.YEAR),
+                        Calendar.getInstance().get(Calendar.MONTH) + 1,
+                        Calendar.getInstance().get(Calendar.DAY_OF_MONTH),
+                        HealthDataType.HeartRate
+                    )
+                )
+            }
+        )
+
+
+        UnitRowLayout(
+            "同步血氧",
+            "同步压力",
+            onFirstClick = {
+                writeListBytes(
+                    ProtoBufHelper.getInstance().sendCMD_GET_HEALTH_DATA(
+                        Calendar.getInstance().get(Calendar.YEAR),
+                        Calendar.getInstance().get(Calendar.MONTH) + 1,
+                        Calendar.getInstance().get(Calendar.DAY_OF_MONTH),
+                        HealthDataType.BloodOxygen
+                    )
+                )
+            },
+            onSecondClick = {
+                writeListBytes(
+                    ProtoBufHelper.getInstance().sendCMD_GET_HEALTH_DATA(
+                        Calendar.getInstance().get(Calendar.YEAR),
+                        Calendar.getInstance().get(Calendar.MONTH) + 1,
+                        Calendar.getInstance().get(Calendar.DAY_OF_MONTH),
+                        HealthDataType.Pressure
+                    )
+                )
+            }
+        )
+
+
+        UnitRowLayout(
+            "同步心率血氧",
+            "同步心率血氧压力",
+            onFirstClick = {
+                writeListBytes(
+                    ProtoBufHelper.getInstance().sendCMD_GET_HEALTH_DATA(
+                        Calendar.getInstance().get(Calendar.YEAR),
+                        Calendar.getInstance().get(Calendar.MONTH) + 1,
+                        Calendar.getInstance().get(Calendar.DAY_OF_MONTH),
+                        HealthDataType.HeartRateAndBloodOxygen
+                    )
+                )
+            },
+            onSecondClick = {
+                writeListBytes(
+                    ProtoBufHelper.getInstance().sendCMD_GET_HEALTH_DATA(
+                        Calendar.getInstance().get(Calendar.YEAR),
+                        Calendar.getInstance().get(Calendar.MONTH) + 1,
+                        Calendar.getInstance().get(Calendar.DAY_OF_MONTH),
+                        HealthDataType.HeartRateBloodOxygenPressure
+                    )
+                )
+            }
+        )
+
+        UnitRowLayout(
+            "活动时长、次数",
+            "步数卡路里距离",
+            onFirstClick = {
+                writeListBytes(
+                    ProtoBufHelper.getInstance().sendCMD_GET_HEALTH_DATA(
+                        Calendar.getInstance().get(Calendar.YEAR),
+                        Calendar.getInstance().get(Calendar.MONTH) + 1,
+                        Calendar.getInstance().get(Calendar.DAY_OF_MONTH),
+                        HealthDataType.ActivityNumberDuration
+                    )
+                )
+            },
+            onSecondClick = {
+                writeListBytes(
+                    ProtoBufHelper.getInstance().sendCMD_GET_HEALTH_DATA(
+                        Calendar.getInstance().get(Calendar.YEAR),
+                        Calendar.getInstance().get(Calendar.MONTH) + 1,
+                        Calendar.getInstance().get(Calendar.DAY_OF_MONTH),
+                        HealthDataType.StepsCaloriesDistance
+                    )
+                )
+            }
+        )
+
+
+        UnitRowLayout(
+            "同步除睡眠数据",
+            "同步睡眠",
+            onFirstClick = {
+                writeListBytes(
+                    ProtoBufHelper.getInstance().sendCMD_GET_HEALTH_DATA(
+                        Calendar.getInstance().get(Calendar.YEAR),
+                        Calendar.getInstance().get(Calendar.MONTH) + 1,
+                        Calendar.getInstance().get(Calendar.DAY_OF_MONTH),
+                        HealthDataType.All
+                    )
+                )
+            },
+            onSecondClick = {
+                writeListBytes(
+                    ProtoBufHelper.getInstance().sendCMD_GET_HEALTH_DATA(
+                        Calendar.getInstance().get(Calendar.YEAR),
+                        Calendar.getInstance().get(Calendar.MONTH) + 1,
+                        Calendar.getInstance().get(Calendar.DAY_OF_MONTH),
+                        HealthDataType.Sleep1
+                    )
+                )
+            }
+        )
+
+        UnitRowLayout(
+            "判断多运动是否正在运行",
+            "--",
+            onFirstClick = {
+                writeListBytes(
+                    ProtoBufHelper.getInstance().sendCMD_GET_MUL_SPORT_IS_RUNNING()
+                )
+            },
+            onSecondClick = {
+                /*writeListBytes(
+                    ProtoBufHelper.getInstance().sendCMD_GET_NOTDISTURB_CONFIG()
+                )*/
             }
         )
 

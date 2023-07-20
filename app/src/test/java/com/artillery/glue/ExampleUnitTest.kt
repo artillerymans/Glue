@@ -3,6 +3,7 @@ package com.artillery.glue
 import org.junit.Test
 
 import org.junit.Assert.*
+import java.math.BigDecimal
 import java.util.TimeZone
 
 /**
@@ -17,5 +18,17 @@ class ExampleUnitTest {
         val rawOffsetMillis = defaultTimeZone.rawOffset
         val rawOffsetHours = rawOffsetMillis / (1000 * 60 * 60)
         println(rawOffsetHours)
+    }
+
+
+    @Test
+    fun string2Int(){
+        val valueStr = "2835217448"
+        println(valueStr.toLong())
+        /*val big = BigDecimal(valueStr)
+
+        println(big.toString())
+        println(big.toInt().toUInt())*/
+
     }
 }

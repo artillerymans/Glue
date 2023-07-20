@@ -246,14 +246,14 @@ class ProtoBufHelper private constructor() {
 
     /**
      * 设置心率配置信息
-     * @param auto 自动检测开关
+     * @param enable 自动检测开关
      * @param interval 自动检测时间 单位分钟
      * @param warmingMax 预警值上限
      * @param warmingMin 预警值下限
      * 应答 err_code
      */
     fun sendCMD_SET_HR_CONFIG(
-        auto: Int,
+        enable: SwitchType,
         interval: Int,
         warmingMax: Int,
         warmingMin: Int,
@@ -262,7 +262,7 @@ class ProtoBufHelper private constructor() {
             cmd = cmd_t.CMD_SET_HR_CONFIG
             setHrConfig(
                 hr_config_info_t.newBuilder()
-                    .setMAuto(auto)
+                    .setMAuto(enable.value)
                     .setMInterval(interval)
                     .setMWarmingUpper(warmingMax)
                     .setMWarmingLower(warmingMin)
@@ -299,7 +299,7 @@ class ProtoBufHelper private constructor() {
      * 应答 err_code
      */
     fun sendCMD_SET_SPO2_CONFIG(
-        auto: Int,
+        enable: SwitchType,
         interval: Int,
         warmingMax: Int,
         warmingMin: Int,
@@ -308,7 +308,7 @@ class ProtoBufHelper private constructor() {
             cmd = cmd_t.CMD_SET_SPO2_CONFIG
             setSpo2Config(
                 spo2_config_info_t.newBuilder()
-                    .setMNightAuto(auto)
+                    .setMNightAuto(enable.value)
                     .setMNightInterval(interval)
                     .setMWarmingUpper(warmingMax)
                     .setMWarmingLower(warmingMin)
@@ -339,19 +339,19 @@ class ProtoBufHelper private constructor() {
 
     /**
      * 设置压力配置信息
-     *  @param auto 夜间自动检测
+     *  @param enable 夜间自动检测
      *  @param interval 检测间隔时间
      *  应答 err_code
      */
     fun sendCMD_SET_STRESS_CONFIG(
-        auto: Int,
+        enable: SwitchType,
         interval: Int,
     ): List<ByteArray> {
         return createBase {
             cmd = cmd_t.CMD_SET_STRESS_CONFIG
             setStressConfig(
                 stress_config_info_t.newBuilder()
-                    .setMAuto(auto)
+                    .setMAuto(enable.value)
                     .setMInterval(interval)
                     .build()
             )
@@ -395,7 +395,7 @@ class ProtoBufHelper private constructor() {
      * 应答 err_code
      */
     fun sendCMD_SET_LONG_SIT_CONFIG(
-        enable: Int,
+        enable: SwitchType,
         duration: Int = 0,
         sHour: Int = 0,
         sMinute: Int = 0,
@@ -411,7 +411,7 @@ class ProtoBufHelper private constructor() {
             cmd = cmd_t.CMD_SET_LONG_SIT_CONFIG
             setLongsitInfo(
                 longsit_info_t.newBuilder()
-                    .setMEable(enable)
+                    .setMEable(enable.value)
                     .setMDuration(duration)
                     .setMStartHour(sHour)
                     .setMStartMinute(sMinute)
@@ -450,7 +450,7 @@ class ProtoBufHelper private constructor() {
      * 应答 err_code
      */
     fun sendCMD_SET_NOTDISTURB_CONFIG(
-        enable: Int,
+        enable: SwitchType,
         type: Int,
         sHour: Int = 0,
         sMinute: Int = 0,
@@ -461,7 +461,7 @@ class ProtoBufHelper private constructor() {
             cmd = cmd_t.CMD_SET_NOTDISTURB_CONFIG
             setNotdisturbInfo(
                 notdisturb_info_t.newBuilder()
-                    .setMEnable(enable)
+                    .setMEnable(enable.value)
                     .setMType(type)
                     .setMStartHour(sHour)
                     .setMStartMinute(sMinute)
@@ -518,12 +518,12 @@ class ProtoBufHelper private constructor() {
      * 创建内容 参看
      * @see createAlarm
      */
-    fun sendCMD_SET_CLOCK_ALARM_CONFIG(enable: Int, list: List<alarm_clock_t>): List<ByteArray> {
+    fun sendCMD_SET_CLOCK_ALARM_CONFIG(enable: SwitchType, list: List<alarm_clock_t>): List<ByteArray> {
         return createBase {
             cmd = cmd_t.CMD_SET_CLOCK_ALARM_CONFIG
             setAlarmInfo(
                 alarm_info_t.newBuilder()
-                    .setMEnable(enable)
+                    .setMEnable(enable.value)
                     .apply {
                         list.forEach { alarmClockT ->
                             addMInfo(alarmClockT)
@@ -762,12 +762,12 @@ class ProtoBufHelper private constructor() {
      * 手机控制手表响铃
      * @param enable 0不响铃 1响铃
      */
-    fun sendCMD_RING_WATCH_CTRL_VALUE(enable: Int): List<ByteArray> {
+    fun sendCMD_RING_WATCH_CTRL_VALUE(enable: SwitchType): List<ByteArray> {
         return createBase {
             cmd = cmd_t.CMD_RING_WATCH_CTRL
             setCtrlCode(
                 ctrl_code_t.newBuilder()
-                    .setMCode(enable)
+                    .setMCode(enable.value)
                     .build()
             )
         }
@@ -1246,8 +1246,8 @@ class ProtoBufHelper private constructor() {
             setAllContactsInfo(
                 contacts_all_info_t.newBuilder()
                     .apply {
-                        list.forEachIndexed { index, contactsInfoT ->
-                            setMContacts(index, contactsInfoT)
+                        list.forEach { contactsInfoT ->
+                            addMContacts(contactsInfoT)
                         }
                     }
                     .build()
