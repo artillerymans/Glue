@@ -46,6 +46,20 @@ fun watch_cmds.createBytes(head: Short, mtuSize: Int, fixedLength: Int): List<By
     }
 }
 
+fun watch_cmds.createBytesNew(head: Short, mtuSize: Int, fixedLength: Int): List<ByteArray>{
+    val data = toByteArray()
+    val crc = data.crcJW002().toShort()
+    val length = data.size.toShort()
+    LogUtils.d("createBytesNew: 包长度 -> $length")
+    return ByteBuffer.allocate(data.size + fixedLength).apply {
+        order(ByteOrder.LITTLE_ENDIAN)
+        putShort(head)
+        putShort(length)
+        putShort(crc)
+        put(data)
+    }.array().cut2ListByteArray(mtuSize)
+}
+
 /**
  * 穿件一个通用的命令模板
  */

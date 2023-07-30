@@ -206,6 +206,11 @@ class JW002ConnectViewModel : ViewModel() {
     fun pack(pair: Pair<Int, ByteArray>) {
         ProtoBufHelper.getInstance().receive(pair.second) { value ->
 
+            if (value == null){
+                LogUtils.d("pack: Ack 数据--->")
+                return@receive
+            }
+
             writeByteArray(
                 ProtoBufHelper.getInstance().sendAckReply(0),
                 JW002BleManage.WriteACK
@@ -218,17 +223,19 @@ class JW002ConnectViewModel : ViewModel() {
                     value.baseParam?.let { baseParamT ->
                         LogUtils.d("pack: baseParamT -> ${GsonUtils.toJson(baseParamT)}")
                         val mtuSize = baseParamT.mMtu
-                        JW002BleManage.getInstance().setMtuSize(mtuSize) { number ->
-                            LogUtils.d("pack: 设置组包中的mut大小 -> $number")
-                            //蓝牙设置mtu成功进行设置组包中的mtu大小
-                            ProtoBufHelper.getInstance().setMtuSize(number)
+                        LogUtils.d("pack: 设置组包中的mut大小 -> $mtuSize")
+                        //蓝牙设置mtu成功进行设置组包中的mtu大小
+                        ProtoBufHelper.getInstance().setMtuSize(mtuSize)
+
+                        /*JW002BleManage.getInstance().setMtuSize(mtuSize) { number ->
+
                             //未绑定
                             if (baseParamT.mIsBind == 0) {
                                 writeByteArrays(
                                     ProtoBufHelper.getInstance().sendCMD_BIND_DEVICE()
                                 )
                             }
-                        }
+                        }*/
 
 
                     }
@@ -249,13 +256,14 @@ class JW002ConnectViewModel : ViewModel() {
                     value.phoneInfo?.let { data ->
                         LogUtils.d("pack: phoneInfo -> ${GsonUtils.toJson(data)}")
                     }
+                    LogUtils.d("pack: CMD_SET_PHONE_INFO -> ${value.errCode}")
                 }
 
                 watch_cmds.cmd_t.CMD_BIND_DEVICE -> {   //绑定设备
                     LogUtils.d("pack: CMD_BIND_DEVICE = ${value.ctrlCode.mCode}")
-                    when (value.ctrlCode.mCode){
+                    /*when (value.ctrlCode.mCode){
                         3 -> JW002BleManage.getInstance().bindDevice()
-                    }
+                    }*/
                 }
 
                 watch_cmds.cmd_t.CMD_SET_MESSAGE_SWITCH -> {   //设置通知开关
@@ -265,6 +273,251 @@ class JW002ConnectViewModel : ViewModel() {
                 watch_cmds.cmd_t.CMD_SET_MESSAGE_DATA -> {   //发送消息数据
                     LogUtils.d("pack: CMD_SET_MESSAGE_DATA = ${value.errCode.err}")
                 }
+
+                watch_cmds.cmd_t.CMD_GET_HR_CONFIG -> { //获取心率配置信息
+                    value.hrConfig?.let {
+                        LogUtils.d("pack: CMD_GET_HR_CONFIG = ${GsonUtils.toJson(it)}")
+                    }
+                }
+
+                watch_cmds.cmd_t.CMD_SET_HR_CONFIG -> {  //设置心率信息
+                    LogUtils.d("pack: CMD_SET_HR_CONFIG = ${value.errCode.err}")
+                }
+
+                watch_cmds.cmd_t.CMD_SYNC_HR_DETECT_VAL -> {  //同步心率测量值
+                    LogUtils.d("pack: CMD_SYNC_HR_DETECT_VAL -> ${value.hrVal}")
+                }
+
+                watch_cmds.cmd_t.CMD_GET_SPO2_CONFIG -> {  //获取血氧配置
+                    LogUtils.d("pack:CMD_GET_SPO2_CONFIG -> ${value.spo2Config}")
+                }
+
+                watch_cmds.cmd_t.CMD_SET_SPO2_CONFIG -> {  //设置血氧配置
+                    LogUtils.d("pack: CMD_SET_SPO2_CONFIG -> ${value.errCode.err}")
+                }
+
+                watch_cmds.cmd_t.CMD_SYNC_SPO2_DETECT_VAL -> {  //同步最新血氧
+                    LogUtils.d("pack: CMD_SYNC_SPO2_DETECT_VAL -> ${GsonUtils.toJson(value.hrVal)}")
+                }
+                watch_cmds.cmd_t.CMD_GET_STRESS_CONFIG -> {  //获取压力配置
+                    LogUtils.d("pack: CMD_GET_STRESS_CONFIG -> ${value.stressConfig}")
+                }
+
+                watch_cmds.cmd_t.CMD_SET_STRESS_CONFIG -> {  //设置压力配置
+                    LogUtils.d("pack: CMD_SET_STRESS_CONFIG -> ${value.errCode}")
+                }
+                watch_cmds.cmd_t.CMD_SYNC_STRESS_DETECT_VAL -> { //同步最新压力值
+                    LogUtils.d("pack: CMD_SYNC_STRESS_DETECT_VAL -> ${value.stressVal}")
+                }
+
+                watch_cmds.cmd_t.CMD_GET_LONG_SIT_CONFIG -> { //获取久坐配置
+                    LogUtils.d("pack: CMD_GET_LONG_SIT_CONFIG -> ${value.longsitInfo}")
+                }
+
+                watch_cmds.cmd_t.CMD_SET_LONG_SIT_CONFIG -> { //设置久坐配置
+                    LogUtils.d("pack: CMD_SET_LONG_SIT_CONFIG -> ${value.errCode}")
+                }
+
+                watch_cmds.cmd_t.CMD_GET_NOTDISTURB_CONFIG -> { //获取勿扰配置
+                    LogUtils.d("pack: CMD_GET_NOTDISTURB_CONFIG -> ${value.notdisturbInfo}")
+                }
+
+                watch_cmds.cmd_t.CMD_SET_NOTDISTURB_CONFIG -> { //设置勿扰配置
+                    LogUtils.d("pack: CMD_SET_NOTDISTURB_CONFIG -> ${value.errCode}")
+                }
+
+                watch_cmds.cmd_t.CMD_SYNC_CLOCK_ALARM_CONFIG -> { //同步闹钟配置
+                    LogUtils.d("pack: CMD_SYNC_CLOCK_ALARM_CONFIG -> ${value.alarmInfo}")
+                }
+
+                watch_cmds.cmd_t.CMD_SET_CLOCK_ALARM_CONFIG -> { //设置闹钟配置
+                    LogUtils.d("pack: CMD_SET_CLOCK_ALARM_CONFIG -> ${value.errCode}")
+                }
+
+                watch_cmds.cmd_t.CMD_SYNC_DRINK_ALARM_CONFIG -> { //同步喝水配置
+                    LogUtils.d("pack: CMD_SYNC_DRINK_ALARM_CONFIG -> ${value.alarmInfo}")
+                }
+
+                watch_cmds.cmd_t.CMD_SET_DRINK_ALARM_CONFIG -> { //设置喝水配置
+                    LogUtils.d("pack: CMD_SET_DRINK_ALARM_CONFIG -> ${value.errCode}")
+                }
+
+                watch_cmds.cmd_t.CMD_SYNC_MEDI_ALARM_CONFIG -> { //同步吃药配置
+                    LogUtils.d("pack: CMD_SYNC_MEDI_ALARM_CONFIG -> ${value.alarmInfo}")
+                }
+
+                watch_cmds.cmd_t.CMD_SET_MEDI_ALARM_CONFIG -> { //设置吃药配置
+                    LogUtils.d("pack: CMD_SET_MEDI_ALARM_CONFIG -> ${value.errCode}")
+                }
+
+                watch_cmds.cmd_t.CMD_SET_COUNTRY_INFO -> { //设置国家信息
+                    LogUtils.d("pack: CMD_SET_COUNTRY_INFO -> ${value.countryInfo}")
+                }
+
+                watch_cmds.cmd_t.CMD_SET_TIME_INFO -> { //设置时间信息
+                    LogUtils.d("pack: CMD_SET_TIME_INFO -> ${value.errCode}")
+                }
+
+                watch_cmds.cmd_t.CMD_SET_TIME_FMT -> { //设置时间格式
+                    LogUtils.d("pack: CMD_SET_TIME_FMT -> ${value.errCode}")
+                }
+
+                watch_cmds.cmd_t.CMD_SET_METRIC_INCH -> { //设置公英制
+                    LogUtils.d("pack: CMD_SET_METRIC_INCH -> ${value.errCode}")
+                }
+
+                watch_cmds.cmd_t.CMD_SET_BRIGHT_DURATION -> { //设置亮屏时间
+                    LogUtils.d("pack: CMD_SET_BRIGHT_DURATION -> ${value.errCode}")
+                }
+
+                watch_cmds.cmd_t.CMD_SET_MENU_STYLE -> { //设置菜单风格
+                    LogUtils.d("pack: CMD_SET_MENU_STYLE -> ${value.errCode}")
+                }
+
+                watch_cmds.cmd_t.CMD_SYNC_MENU_STYLE -> { //获取菜单风格
+                    LogUtils.d("pack: CMD_SET_MENU_STYLE -> ${value.ctrlCode}")
+                }
+
+                watch_cmds.cmd_t.CMD_SYNC_DAY_SPORT_TARGET -> { //同步每天运动目标
+                    LogUtils.d("pack: CMD_SYNC_DAY_SPORT_TARGET -> ${value.daySportInfo}")
+                }
+
+                watch_cmds.cmd_t.CMD_SET_DAY_SPORT_TARGET -> { //设置每天运动目标
+                    LogUtils.d("pack: CMD_SET_DAY_SPORT_TARGET -> ${value.errCode}")
+                }
+
+                watch_cmds.cmd_t.CMD_SYNC_ACTUAL_STEP_INFO -> { //同步实时步数
+                    LogUtils.d("pack: CMD_SYNC_ACTUAL_STEP_INFO -> ${value.daySportInfo}")
+                }
+
+                watch_cmds.cmd_t.CMD_SYNC_BATTERY_INFO -> { //同步电量
+                    LogUtils.d("pack: CMD_SYNC_BATTERY_INFO -> ${value.batteryInfo}")
+                }
+
+                watch_cmds.cmd_t.CMD_RING_WATCH_CTRL -> { //手机控制手表响铃
+                    LogUtils.d("pack: CMD_RING_WATCH_CTRL -> ${value.errCode}")
+                }
+                watch_cmds.cmd_t.CMD_CTRL_PHONE_TAKE_PICTURE -> {  //手表控制手机拍照
+                    LogUtils.d("pack: CMD_CTRL_PHONE_TAKE_PICTURE -> ${value.errCode}")
+                }
+
+                watch_cmds.cmd_t.CMD_SET_WEATHER_INFO -> {  //手机天气信息
+                    LogUtils.d("pack: CMD_SET_WEATHER_INFO -> ${value.weatherInfo}")
+                }
+                watch_cmds.cmd_t.CMD_MUSIC_CTRL -> {  //手表控制播放
+                    LogUtils.d("pack: CMD_MUSIC_CTRL -> ${value.musicCtrlInfo}")
+                }
+
+                watch_cmds.cmd_t.CMD_PHONE_MUSIC_INFO_UPDATE -> {  //手机更新播放信息
+                    LogUtils.d("pack: CMD_MUSIC_CTRL -> ${value.errCode}")
+                }
+
+                watch_cmds.cmd_t.CMD_SET_DEVICE_MODE -> {  //设置设备模式
+                    LogUtils.d("pack: CMD_SET_DEVICE_MODE -> ${value.errCode}")
+                }
+
+                watch_cmds.cmd_t.CMD_PHONE_CALL_CTRL -> {  //设置设备模式
+                    LogUtils.d("pack: CMD_PHONE_CALL_CTRL -> ${value.errCode}")
+                }
+
+                watch_cmds.cmd_t.CMD_GET_MENU_SEQUENCE_DATA -> {  //获取菜单序列编码
+                    LogUtils.d("pack: CMD_GET_MENU_SEQUENCE_DATA -> ${value.menuSequenceInfo}")
+                }
+
+                watch_cmds.cmd_t.CMD_SET_MENU_SEQUENCE_DATA -> {  //设置菜单序列编码
+                    LogUtils.d("pack: CMD_SET_MENU_SEQUENCE_DATA -> ${value.menuSequenceInfo}")
+                }
+
+                watch_cmds.cmd_t.CMD_PHONE_APP_SET_STATUS -> {  //设置手机状态
+                    LogUtils.d("pack: CMD_PHONE_APP_SET_STATUS -> ${value.errCode}")
+                }
+
+                watch_cmds.cmd_t.CMD_SET_WATCH_EVENT -> {  //通告手表事件
+                    LogUtils.d("pack: CMD_SET_WATCH_EVENT -> ${value.errCode}")
+                }
+                watch_cmds.cmd_t.CMD_SET_LOG_INFO_DATA -> {  //设置Log记录上报
+                    LogUtils.d("pack: CMD_SET_LOG_INFO_DATA -> ${value.errCode}")
+                }
+                watch_cmds.cmd_t.CMD_GET_LOG_INFO_DATA -> {  //获取Log记录上报
+                    LogUtils.d("pack: CMD_SET_LOG_INFO_DATA -> ${value.errCode}")
+                }
+
+                watch_cmds.cmd_t.CMD_SYNC_DIAL_CONFIG_DATA -> {  //获取表盘信息
+                    LogUtils.d("pack: CMD_SYNC_DIAL_CONFIG_DATA -> ${value.dialConfig}")
+                }
+
+                watch_cmds.cmd_t.CMD_GET_HEALTH_DATA -> {  //获取某一天健康数据
+                    LogUtils.d("pack: CMD_GET_HEALTH_DATA -> ${value.historyResponse}")
+                }
+
+                watch_cmds.cmd_t.CMD_GET_MUL_SPORT_IS_RUNNING -> {  //获取多运动是否正在运行
+                    LogUtils.d("pack: CMD_GET_MUL_SPORT_IS_RUNNING -> ${value.ctrlCode}")
+                }
+
+                watch_cmds.cmd_t.CMD_SET_MUL_SPORT_STATUS -> {  //多运动状态控制
+                    LogUtils.d("pack: CMD_SET_MUL_SPORT_STATUS -> ${value.mulSportParam}")
+                }
+
+                watch_cmds.cmd_t.CMD_SET_MUL_SPORT_STATUS -> {  //多运动状态控制
+                    LogUtils.d("pack: CMD_SET_MUL_SPORT_STATUS -> ${value.mulSportParam}")
+                }
+
+                watch_cmds.cmd_t.CMD_GET_MUL_SPORT_RECORD_ABSTRACT -> {  //获取多运动记录摘要
+                    LogUtils.d("pack: CMD_GET_MUL_SPORT_RECORD_ABSTRACT -> ${value.mulSportAbstract}")
+                }
+
+                watch_cmds.cmd_t.CMD_GET_MUL_SPORT_RECORD_DATA -> {  //获取多运动记录和日志数据
+                    LogUtils.d("pack: CMD_GET_MUL_SPORT_RECORD_ABSTRACT -> ${value.mulSportRecord}")
+                }
+
+                watch_cmds.cmd_t.CMD_UPDATE_FILE_NOTIFY -> {  //通告文件升级
+                    LogUtils.d("pack: CMD_UPDATE_FILE_NOTIFY -> ${value.errCode}")
+                }
+
+                watch_cmds.cmd_t.CDM_UPDATE_FILE_DATA_REQUEST -> {  //请求文件数据
+                    LogUtils.d("pack: CMD_UPDATE_FILE_NOTIFY -> ${value.fileRequstParam}")
+                }
+
+                watch_cmds.cmd_t.CMD_UPDATE_FILE_RESULT_NOTIFY -> {  //通告升级结果
+                    LogUtils.d("pack: CMD_UPDATE_FILE_NOTIFY -> ${value.fileResult}")
+                }
+
+                watch_cmds.cmd_t.CMD_CONTACTS_GET -> {  //获取所有通讯录
+                    LogUtils.d("pack: CMD_CONTACTS_GET -> ${GsonUtils.toJson(value)}")
+                    value.allContactsInfo?.mContactsList?.forEach { item ->
+                        LogUtils.d("pack: name = ${item.mName.toStringUtf8()}, number = ${item.mNumber.toStringUtf8()}")
+                    }
+
+                }
+
+                watch_cmds.cmd_t.CMD_CONTACTS_SET -> {  //设置通讯录
+                    LogUtils.d("pack: CMD_CONTACTS_GET -> ${value.contactsInfo}")
+                }
+
+                watch_cmds.cmd_t.CMD_CONTACTS_SYNC -> {  //获取通讯录所有
+                    LogUtils.d("pack: CMD_CONTACTS_SYNC -> ${value.contactsInfo}")
+                }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
                 else -> {
                     LogUtils.d("pack: 未知命令 -> ${cmd.name}， error = ${value.errCode?.err}")

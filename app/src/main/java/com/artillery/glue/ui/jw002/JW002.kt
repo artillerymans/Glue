@@ -140,6 +140,31 @@ fun JW002Compose(navController: NavController, viewModel: JW002ConnectViewModel)
             }
         )
 
+
+        UnitRowLayout(
+            "获取通讯录",
+            "设置通讯录",
+            onFirstClick = {
+                writeListBytes(
+                    ProtoBufHelper.getInstance().sendCMD_CONTACTS_GET()
+                )
+            },
+            onSecondClick = {
+                val defValue = 1000834
+                writeListBytes(
+                    ProtoBufHelper.getInstance().sendCMD_CONTACTS_SYNC(
+                        (1..10).map { index ->
+                            ProtoBufHelper.getInstance().createContactsInfo(
+                                "李四$index",
+                                "18374${defValue + index}",
+                                index
+                            )
+                        }
+                    )
+                )
+            }
+        )
+
         UnitRowLayout(
             "获取心率配置信息",
             "同步最新心率值",

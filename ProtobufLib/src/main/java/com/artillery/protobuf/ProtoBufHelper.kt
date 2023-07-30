@@ -36,6 +36,7 @@ import com.artillery.protobuf.model.weather_day_info_t
 import com.artillery.protobuf.model.weather_info_t
 import com.artillery.protobuf.utils.crcJW002
 import com.artillery.protobuf.utils.createBytes
+import com.artillery.protobuf.utils.createBytesNew
 import com.artillery.protobuf.utils.createPkeySkey
 import com.artillery.protobuf.utils.createRandomByteArray
 import com.artillery.protobuf.utils.createWatchCommand
@@ -117,7 +118,7 @@ class ProtoBufHelper private constructor() {
      * 绑定设备
      */
     fun sendCMD_BIND_DEVICE(
-        userID: Int = UInt.MAX_VALUE.toInt(),
+        userID: Int = 10086,
         userName: String = "alex",
         age: Int = 18,
         gender: Int = 0,
@@ -158,7 +159,7 @@ class ProtoBufHelper private constructor() {
                 phone_info_t.newBuilder()
                     .setMLanguage(JW002Language.systemLanguage().value)
                     .setMAppversion(AppUtils.getAppVersionCode())
-                    .setMPhonemodel(0)
+                    .setMPhonemodel(1)  //1 Android 0 iOS
                     .setMSystemversion(DeviceUtils.getSDKVersionCode())
                     .build()
             )
@@ -171,7 +172,9 @@ class ProtoBufHelper private constructor() {
     fun sendCMD_SET_MESSAGE_SWITCH(vararg values: MessageSwitch): List<ByteArray> {
         val defValue = UInt.MIN_VALUE
         var tempValue = 0u
-        values.forEach { msg ->
+        values.toMutableList().apply {
+            add(0, MessageSwitch.All(1))
+        }.forEach { msg ->
             val tempTypeValue = when (msg.type) {
                 MsgType.All -> msg.value.toUInt()
                 MsgType.Instagram -> msg.value.toUInt() shl 1
@@ -842,10 +845,7 @@ class ProtoBufHelper private constructor() {
                     .setMCityName(city.toByteStringUtf8())
                     .apply {
                         list.forEachIndexed { index, weather ->
-                            setMDaysInfo(
-                                index,
-                                weather
-                            )
+                            addMDaysInfo(weather)
                         }
                     }
 
@@ -1229,9 +1229,11 @@ class ProtoBufHelper private constructor() {
      */
     fun createContactsInfo(
         nameStr: String,
-        numberStr: String
+        numberStr: String,
+        serials: Int
     ): contacts_info_t {
         return contacts_info_t.newBuilder()
+            .setMSerials(serials)
             .setMName(nameStr.toByteStringUtf8())
             .setMNumber(numberStr.toByteStringUtf8())
             .build()
@@ -1282,7 +1284,7 @@ class ProtoBufHelper private constructor() {
      * 构建最基本的 watch_cmds 对象数据
      */
     private inline fun createBase(onParams: Builder.() -> Builder): List<ByteArray> {
-        return createWatchCommand(onParams).createBytes(head, mMtuSize, dataFixedLength)
+        return createWatchCommand(onParams).createBytesNew(head, mMtuSize, dataFixedLength)
     }
 
     fun sendAckReply(code: Byte): ByteArray {
@@ -1295,46 +1297,102 @@ class ProtoBufHelper private constructor() {
     }
 
 
+    private var mLength: UShort = 0u
+
     /**
      * 接收数据包
      */
-    fun receive(bytes: ByteArray, onAnalysis: (watch_cmds) -> Unit) {
+    fun receive(bytes: ByteArray, onAnalysis: (watch_cmds?) -> Unit) {
         //转换成小端
         val buffer = ByteBuffer.wrap(bytes).apply {
             order(ByteOrder.LITTLE_ENDIAN)
         }
         //包头
         val tempHeader = buffer.short.toUShort().toString(16)
-        if (!Ble.BLE_HEADER.equals(tempHeader, true)) {
-            LogUtils.d("receive: 包头为 => $tempHeader, 不进行解析")
-            return
-        }
-        //数据长度
-        val length = buffer.short.toUShort()
-        //校验和
-        val crc = buffer.short.toUShort()
-        val tempBytes = ByteArray(buffer.remaining())
-        buffer.get(tempBytes)
-
-        //说明当前一包数据就够了 不需要进行合包
-        if (length == tempBytes.size.toUShort()) {
-            //crc校验通过
-            val watch = bytes2WatchCmd(tempBytes, crc)
-            watch?.let {
-                onAnalysis.invoke(it)
-            }
-        } else {
-            //走到这里说明当前数据是分包了的
-            mCacheBytes.addAll(tempBytes.toList())
-            val tempLength = mCacheBytes.size.toUShort()
-            if (length == tempLength) {
-                val tempCacheBytes = mCacheBytes.toByteArray()
+        if (Ble.BLE_HEADER_ACK.equals(tempHeader, true)){
+            onAnalysis.invoke(null)
+        }else if (Ble.BLE_HEADER.equals(tempHeader, true)) {
+            //数据长度
+            mLength = buffer.short.toUShort()
+            //校验和
+            val crc = buffer.short.toUShort()
+            val tempBytes = ByteArray(buffer.remaining())
+            buffer.get(tempBytes)
+            if (mLength == tempBytes.size.toUShort()){
                 //crc校验通过
-                val watch = bytes2WatchCmd(tempCacheBytes, crc)
+                val watch = bytes2WatchCmd(tempBytes, crc)
                 watch?.let {
                     onAnalysis.invoke(it)
-                    mCacheBytes.clear()
+                    reset()
                 }
+            }else {
+                mCacheBytes.addAll(bytes.toList())
+            }
+        }else {
+            mCacheBytes.addAll(bytes.toList())
+
+            //转换成小端
+            val buffer = ByteBuffer.wrap(mCacheBytes.toByteArray()).apply {
+                order(ByteOrder.LITTLE_ENDIAN)
+            }
+            //包头
+            val tempHeader = buffer.short.toUShort().toString(16)
+            //数据长度
+            val length = buffer.short.toUShort()
+            //校验和
+            val crc = buffer.short.toUShort()
+            val tempBytes = ByteArray(buffer.remaining())
+            buffer.get(tempBytes)
+            LogUtils.d("receive: mLength = $mLength, tempBytes.size = ${tempBytes.size.toUShort()}")
+            if (mLength == tempBytes.size.toUShort()){
+                //crc校验通过
+                val watch = bytes2WatchCmd(tempBytes, crc)
+                watch?.let {
+                    reset()
+                    onAnalysis.invoke(it)
+                }
+            }
+        }
+    }
+
+    private fun reset(){
+        mCacheBytes.clear()
+        mLength = 0u
+    }
+
+    fun ByteArray.createByteBuffer(): ByteBuffer?{
+        //转换成小端
+        val buffer = ByteBuffer.wrap(this).apply {
+            order(ByteOrder.LITTLE_ENDIAN)
+        }
+        //包头
+        val tempHeader = buffer.short.toUShort().toString(16)
+        return if (Ble.BLE_HEADER_ACK.equals(tempHeader, true)){
+            null
+        }else if (Ble.BLE_HEADER.equals(tempHeader, true)) {
+            //数据长度
+            val length = buffer.short.toUShort()
+            //校验和
+            val crc = buffer.short.toUShort()
+            val tempBytes = ByteArray(buffer.remaining())
+            buffer.get(tempBytes)
+            if (length == tempBytes.size.toUShort()){
+                ByteBuffer.wrap(this).apply {
+                    order(ByteOrder.LITTLE_ENDIAN)
+                    put(this)
+                }
+            }else {
+                mCacheBytes.addAll(tempBytes.toList())
+                ByteBuffer.wrap(this).apply {
+                    order(ByteOrder.LITTLE_ENDIAN)
+                    put(mCacheBytes.toByteArray())
+                }
+            }
+        }else {
+            mCacheBytes.addAll(this.toList())
+            ByteBuffer.wrap(this).apply {
+                order(ByteOrder.LITTLE_ENDIAN)
+                put(mCacheBytes.toByteArray())
             }
         }
     }
